@@ -1,0 +1,8 @@
+---
+import Layout from '../layouts/Layout.astro';
+import CoursesApp from '../components/apps/CoursesApp.svelte';
+---
+
+<Layout title="Courses">
+  <CoursesApp client:only="svelte" />
+</Layout>

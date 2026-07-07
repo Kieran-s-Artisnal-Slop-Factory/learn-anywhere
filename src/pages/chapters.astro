@@ -1,0 +1,8 @@
+---
+import Layout from '../layouts/Layout.astro';
+import ChaptersApp from '../components/apps/ChaptersApp.svelte';
+---
+
+<Layout title="Chapters">
+  <ChaptersApp client:only="svelte" />
+</Layout>
