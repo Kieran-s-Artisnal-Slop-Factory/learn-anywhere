@@ -233,22 +233,37 @@ page that proves the risky pieces work together:
 
 # Phase 2
 
-- [ ] Build out the course listings page that shows off the available courses
-- [ ] Build out the course overview page
-- [ ] Build out the chapter overview page
-- [ ] Build out the exercise page
-    - [ ] Build out the exercise editor component
-        - [ ] CodeMirror 6 text editor with SQL syntax highlighting
-        - [ ] Surface syntax/validity errors by `prepare()`-ing statements against
+- [x] Build out the course listings page that shows off the available courses
+      (`/courses/` — static course facts + a progress island)
+- [x] Build out the course overview page (`/courses/{course}/` — statically
+      rendered description, enroll button, per-chapter progress)
+- [x] Build out the chapter overview page (`/courses/{course}/{chapter}/`)
+- [x] Build out the exercise page
+      (`/courses/{course}/{chapter}/{exercise}/` — implements the on-load
+      sequence: fresh DB → seed → restore buffer without executing (warning
+      banner) → viewer on first table → stamp started → surface completed)
+    - [x] Build out the exercise editor component (`SqlEditor.svelte`)
+        - [x] CodeMirror 6 text editor with SQL syntax highlighting
+        - [x] Surface syntax/validity errors by `prepare()`-ing statements against
               SQLite WASM and bubbling up any thrown error (the engine is the
               source of truth, not an editor linter)
-        - [ ] Build out the DB viewer component
-    - [ ] Implement solution validation using the coercion comparator above
+        - [x] Build out the DB viewer component (`DbViewer.svelte`)
+    - [x] Implement solution validation using the coercion comparator above
+          (passing cascades completion: exercise → chapter when all its
+          exercises are done → course when all chapters are done;
+          `src/lib/progress.ts`)
+- [x] (supporting) `precache.json` endpoint generated from the collections so
+      the service worker precaches every course/chapter/exercise page — new
+      content is offline-capable without touching `sw.js`
 
 # Phase 3
 
-- [ ] Build out the user onboarding flow
-- [ ] Build out the per-course onboarding/enrollment flow
+- [x] Build out the user onboarding flow (first-visit gate → learner-focused
+      welcome → persistent-storage request → lands on the course listing)
+- [x] Build out the per-course onboarding/enrollment flow (Enroll on the course
+      overview copies the whole bundle into IndexedDB via the content-hash
+      sync; chapters stay unlinked until enrolled; deep links to
+      chapter/exercise pages self-sync so shared URLs still work)
 
 # Technical requirements
 

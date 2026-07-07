@@ -1,0 +1,60 @@
+---
+// Chapter overview — statically rendered description + exercise list island.
+import { render } from 'astro:content';
+import Layout from '../../../../layouts/Layout.astro';
+import ChapterOverviewApp from '../../../../components/course/ChapterOverviewApp.svelte';
+import {
+  chapterContent,
+  courseContent,
+  exerciseContent,
+  loadCourseTrees,
+} from '../../../../lib/content/bundle';
+
+export async function getStaticPaths() {
+  const trees = await loadCourseTrees();
+  return trees.flatMap((tree) =>
+    tree.chapters.map(({ chapter, exercises }) => ({
+      params: { course: tree.course.id, chapter: chapter.id },
+      props: { course: tree.course, chapter, exercises },
+    }))
+  );
+}
+
+const { course, chapter, exercises } = Astro.props;
+const { Content } = await render(chapter);
+---
+
+<Layout title={chapter.data.title}>
+  <nav class="breadcrumbs">
+    <a href="/courses/">Courses</a> ›
+    <a href={`/courses/${course.id}/`}>{course.data.title}</a>
+  </nav>
+  <div class="page-header">
+    <h1>{chapter.data.title}</h1>
+  </div>
+  <div class="prose">
+    <Content />
+  </div>
+  <ChapterOverviewApp
+    client:only="svelte"
+    course={courseContent(course)}
+    chapter={chapterContent(chapter)}
+    exercises={exercises.map(exerciseContent)}
+  />
+</Layout>
+
+<style>
+  .breadcrumbs {
+    font-size: var(--font-size-sm);
+    margin-bottom: var(--space-2);
+  }
+
+  .prose {
+    margin-bottom: var(--space-4);
+    max-width: 65ch;
+  }
+
+  .prose :global(p) {
+    margin-block: var(--space-3);
+  }
+</style>

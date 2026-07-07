@@ -1,0 +1,121 @@
+---
+// Exercise page — statically rendered instructions, the interactive editor +
+// engine island, and prev/next navigation within the chapter.
+import { render } from 'astro:content';
+import Layout from '../../../../layouts/Layout.astro';
+import ExerciseApp from '../../../../components/exercise/ExerciseApp.svelte';
+import {
+  chapterContent,
+  courseContent,
+  exerciseContent,
+  loadCourseTrees,
+} from '../../../../lib/content/bundle';
+
+export async function getStaticPaths() {
+  const trees = await loadCourseTrees();
+  return trees.flatMap((tree) =>
+    tree.chapters.flatMap(({ chapter, exercises }) =>
+      exercises.map((exercise, i) => ({
+        params: { course: tree.course.id, chapter: chapter.id, exercise: exercise.id },
+        props: {
+          course: tree.course,
+          chapter,
+          exercise,
+          prev: exercises[i - 1] ?? null,
+          next: exercises[i + 1] ?? null,
+          position: { index: i + 1, total: exercises.length },
+        },
+      }))
+    )
+  );
+}
+
+const { course, chapter, exercise, prev, next, position } = Astro.props;
+const { Content } = await render(exercise);
+const chapterHref = `/courses/${course.id}/${chapter.id}/`;
+---
+
+<Layout title={exercise.data.title}>
+  <nav class="breadcrumbs">
+    <a href="/courses/">Courses</a> ›
+    <a href={`/courses/${course.id}/`}>{course.data.title}</a> ›
+    <a href={chapterHref}>{chapter.data.title}</a>
+  </nav>
+  <div class="page-header">
+    <h1>{exercise.data.title}</h1>
+    <span class="muted">Exercise {position.index} of {position.total}</span>
+  </div>
+  <div class="prose">
+    <Content />
+  </div>
+
+  <ExerciseApp
+    client:only="svelte"
+    course={courseContent(course)}
+    chapter={chapterContent(chapter)}
+    exercise={exerciseContent(exercise)}
+  />
+
+  <nav class="pager">
+    {
+      prev ? (
+        <a class="btn" href={`${chapterHref}${prev.id}/`}>
+          ← {prev.data.title}
+        </a>
+      ) : (
+        <a class="btn" href={chapterHref}>
+          ← {chapter.data.title}
+        </a>
+      )
+    }
+    {
+      next ? (
+        <a class="btn" href={`${chapterHref}${next.id}/`}>
+          {next.data.title} →
+        </a>
+      ) : (
+        <a class="btn" href={`/courses/${course.id}/`}>
+          Back to course →
+        </a>
+      )
+    }
+  </nav>
+</Layout>
+
+<style>
+  .breadcrumbs {
+    font-size: var(--font-size-sm);
+    margin-bottom: var(--space-2);
+  }
+
+  .prose {
+    margin-bottom: var(--space-4);
+    max-width: 70ch;
+  }
+
+  .prose :global(p),
+  .prose :global(ol),
+  .prose :global(ul) {
+    margin-block: var(--space-3);
+  }
+
+  .prose :global(pre) {
+    padding: var(--space-3);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--border-color);
+    overflow-x: auto;
+    font-size: var(--font-size-sm);
+  }
+
+  .prose :global(code) {
+    font-family: ui-monospace, monospace;
+  }
+
+  .pager {
+    display: flex;
+    justify-content: space-between;
+    gap: var(--space-3);
+    margin-top: var(--space-5);
+    flex-wrap: wrap;
+  }
+</style>

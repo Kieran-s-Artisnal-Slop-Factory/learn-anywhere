@@ -1,41 +1,27 @@
 <script lang="ts">
-  // Available courses (baked into the page at build time) + the cached rows
-  // in IndexedDB. "Cache course" runs the content-hash sync — the same flow
-  // enrollment (Phase 3) will use: create missing rows, refresh stale
-  // content, and always preserve progress. Real course pages arrive in
-  // Phase 2.
+  // Course listing: static course facts baked in at build time, decorated
+  // with the visitor's cached progress from IndexedDB.
   import { onMount } from 'svelte';
   import { all } from '../../lib/db/repo';
   import type { Courses } from '../../lib/db/types';
-  import type { ChapterContent, CourseContent, ExerciseContent } from '../../lib/content/types';
-  import { syncCourseBundle } from '../../lib/content/sync';
   import Card from '../Card.svelte';
 
-  interface Bundle {
-    course: CourseContent;
-    chapters: ChapterContent[];
-    exercises: ExerciseContent[];
+  interface CourseCard {
+    slug: string;
+    title: string;
+    blurb: string;
+    chapterCount: number;
+    exerciseCount: number;
   }
 
-  let { bundles = [] }: { bundles?: Bundle[] } = $props();
+  let { courses = [] }: { courses?: CourseCard[] } = $props();
 
-  let loading = $state(true);
-  let cached: Courses[] = $state([]);
+  let rows: Courses[] = $state([]);
 
-  const cachedRow = (slug: string) => cached.find((c) => c.id === slug);
-
-  async function refresh() {
-    cached = await all<Courses>('courses');
-  }
-
-  async function cacheCourse(bundle: Bundle) {
-    await syncCourseBundle($state.snapshot(bundle) as Bundle);
-    await refresh();
-  }
+  const rowFor = (slug: string) => rows.find((r) => r.id === slug);
 
   onMount(async () => {
-    await refresh();
-    loading = false;
+    rows = await all<Courses>('courses');
   });
 </script>
 
@@ -43,54 +29,41 @@
   <h1>Courses</h1>
 </div>
 
-{#if loading}
-  <p class="muted">Loading…</p>
-{:else}
-  <div class="stack">
-    {#each bundles as bundle (bundle.course.slug)}
-      {@const row = cachedRow(bundle.course.slug)}
-      <Card title={bundle.course.title}>
-        <p class="muted">
-          {bundle.chapters.length} chapters · {bundle.exercises.length} exercises
-        </p>
-        <p class="description">{bundle.course.description.split('\n')[0]}</p>
-        <div class="row meta">
-          {#if row}
-            {#if row.content_hash === bundle.course.content_hash}
-              <span class="badge">cached · up to date</span>
-            {:else}
-              <span class="badge stale">cached · content changed</span>
-            {/if}
-            {#if row.started}<span class="badge">started</span>{/if}
-            {#if row.completed}<span class="badge done">completed</span>{/if}
-          {:else}
-            <span class="badge">not cached</span>
-          {/if}
-        </div>
-        <button class="btn btn-primary" onclick={() => cacheCourse(bundle)}>
-          {row ? 'Refresh cache' : 'Cache course'}
-        </button>
-      </Card>
-    {:else}
-      <p class="muted">No courses have been authored yet.</p>
-    {/each}
-  </div>
-{/if}
+<div class="stack">
+  {#each courses as course (course.slug)}
+    {@const row = rowFor(course.slug)}
+    <Card title={course.title}>
+      <p class="muted counts">{course.chapterCount} chapters · {course.exerciseCount} exercises</p>
+      <p class="blurb">{course.blurb}</p>
+      <div class="row meta">
+        {#if row?.completed}
+          <span class="badge done">completed</span>
+        {:else if row?.started}
+          <span class="badge">in progress</span>
+        {:else if row}
+          <span class="badge">enrolled</span>
+        {/if}
+      </div>
+      <a class="btn btn-primary" href={`/courses/${course.slug}/`}>
+        {row?.started ? 'Continue' : 'View course'}
+      </a>
+    </Card>
+  {:else}
+    <p class="muted">No courses have been authored yet.</p>
+  {/each}
+</div>
 
 <style>
-  .stack {
-    display: grid;
-    gap: var(--space-4);
+  .counts {
+    font-size: var(--font-size-sm);
   }
 
-  .description {
+  .blurb {
     margin-block: var(--space-2);
   }
 
   .meta {
-    gap: var(--space-2);
     margin-bottom: var(--space-3);
-    flex-wrap: wrap;
   }
 
   .badge {
@@ -99,11 +72,6 @@
     border: 1px solid var(--border-color);
     border-radius: var(--radius-full);
     color: var(--text-muted-color);
-  }
-
-  .badge.stale {
-    color: var(--color-danger);
-    border-color: var(--color-danger);
   }
 
   .badge.done {

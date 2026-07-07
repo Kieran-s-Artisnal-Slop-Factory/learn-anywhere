@@ -10,18 +10,23 @@
     // Best-effort: keep IndexedDB out of the browser's eviction pool.
     await requestPersistentStorage();
     localStorage.setItem(ONBOARDED_KEY, '1');
-    location.replace('/');
+    location.replace('/courses/');
   }
 </script>
 
 <div class="onboarding">
   <h1>Welcome to lite-learner</h1>
   <p class="muted">
-    Everything you create stays in this browser — there is no server and no account. The app
-    works fully offline; export JSON backups from Settings to keep a copy elsewhere.
+    Learn SQL by writing it. Every exercise runs against a real SQLite database in your
+    browser — write a statement, run it, and watch the database change.
   </p>
+  <ul class="muted points">
+    <li>No account and no server: enroll in a course and it's copied into this browser.</li>
+    <li>Your progress and solutions are saved locally and survive reloads.</li>
+    <li>After the first visit everything works fully offline.</li>
+  </ul>
   <div>
-    <button class="btn btn-primary" onclick={finish} disabled={busy}>Get started</button>
+    <button class="btn btn-primary" onclick={finish} disabled={busy}>Browse courses</button>
   </div>
 </div>
 
@@ -37,5 +42,13 @@
 
   .muted {
     color: var(--text-muted-color);
+  }
+
+  .points {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+    padding-left: var(--space-5);
+    margin: 0;
   }
 </style>

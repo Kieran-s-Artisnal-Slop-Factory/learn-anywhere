@@ -1,0 +1,19 @@
+---
+// Course listing — static course facts; the island adds cached progress.
+import Layout from '../../layouts/Layout.astro';
+import CoursesApp from '../../components/apps/CoursesApp.svelte';
+import { loadCourseTrees } from '../../lib/content/bundle';
+
+const trees = await loadCourseTrees();
+const courses = trees.map((tree) => ({
+  slug: tree.course.id,
+  title: tree.course.data.title,
+  blurb: (tree.course.body ?? '').trim().split(/\n\s*\n/)[0] ?? '',
+  chapterCount: tree.chapters.length,
+  exerciseCount: tree.chapters.reduce((n, c) => n + c.exercises.length, 0),
+}));
+---
+
+<Layout title="Courses">
+  <CoursesApp client:only="svelte" {courses} />
+</Layout>

@@ -19,9 +19,23 @@ const CACHE_NAME = 'lite-learner-cache-v1';
 // without hardcoding the base in two places.
 const BASE = new URL(self.registration.scope).pathname; // always ends with '/'
 const ASSET_PREFIX = BASE + '_astro/';
-const PRECACHE = ['', 'exercises/', 'courses/', 'chapters/', 'settings/', 'onboarding/', 'spike/', 'favicon.svg'].map(
-  (path) => BASE + path
-);
+// Fallback when the build-time manifest can't be fetched. precache.json is
+// generated from the content collections and includes every course, chapter,
+// and exercise page.
+const PRECACHE_FALLBACK = ['', 'exercises/', 'courses/', 'chapters/', 'settings/', 'onboarding/', 'spike/', 'favicon.svg'];
+
+async function precacheList() {
+  try {
+    const response = await fetch(BASE + 'precache.json');
+    if (response.ok) {
+      const paths = await response.json();
+      if (Array.isArray(paths)) return paths.map((path) => BASE + path);
+    }
+  } catch {
+    // offline install retry / manifest missing — fall through
+  }
+  return PRECACHE_FALLBACK.map((path) => BASE + path);
+}
 
 // Servers often send `Vary: Origin`, and module import() requests carry an
 // Origin header while our install-time fetches don't — without ignoreVary the
@@ -35,8 +49,9 @@ const MATCH_OPTS = { ignoreVary: true };
  */
 async function precacheEverything() {
   const cache = await caches.open(CACHE_NAME);
-  const seen = new Set(PRECACHE);
-  const queue = [...PRECACHE];
+  const precache = await precacheList();
+  const seen = new Set(precache);
+  const queue = [...precache];
   while (queue.length > 0) {
     const url = queue.shift();
     let response = await cache.match(url, MATCH_OPTS);
