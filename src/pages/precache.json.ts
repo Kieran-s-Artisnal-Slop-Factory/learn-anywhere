@@ -9,20 +9,10 @@ import type { APIRoute } from 'astro';
 import { loadCourseTrees } from '../lib/content/bundle';
 
 export const GET: APIRoute = async () => {
-  const paths = [
-    '',
-    'courses/',
-    'exercises/',
-    'chapters/',
-    'settings/',
-    'onboarding/',
-    'spike/',
-    'favicon.svg',
-  ];
+  const paths = ['', 'courses/', 'settings/', 'onboarding/', 'spike/', 'favicon.svg'];
   for (const tree of await loadCourseTrees()) {
     paths.push(`courses/${tree.course.id}/`);
     for (const { chapter, exercises } of tree.chapters) {
-      paths.push(`courses/${tree.course.id}/${chapter.id}/`);
       for (const exercise of exercises) {
         paths.push(`courses/${tree.course.id}/${chapter.id}/${exercise.id}/`);
       }

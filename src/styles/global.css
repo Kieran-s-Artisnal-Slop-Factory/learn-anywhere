@@ -53,7 +53,23 @@ p {
 }
 
 a {
+  color: var(--color-primary);
+}
+
+a:hover {
   color: var(--color-primary-strong);
+}
+
+code {
+  font-family: var(--font-body);
+  background: var(--surface-raised-color);
+  border-radius: var(--radius-sm);
+  padding: 0 var(--space-1);
+}
+
+pre code {
+  background: none;
+  padding: 0;
 }
 
 button,
@@ -113,6 +129,7 @@ label {
 
 .btn:hover {
   border-color: var(--color-primary);
+  color: var(--color-primary-strong);
 }
 
 .btn-primary {
@@ -124,9 +141,15 @@ label {
 .btn-primary:hover {
   background: var(--color-primary-strong);
   border-color: var(--color-primary-strong);
+  color: var(--color-on-primary);
 }
 
 .btn-danger {
+  color: var(--color-danger);
+}
+
+.btn-danger:hover {
+  border-color: var(--color-danger);
   color: var(--color-danger);
 }
 
@@ -179,13 +202,138 @@ main.page {
   grid-template-columns: repeat(auto-fit, minmax(18rem, 1fr));
 }
 
+/* Status badges — pill labels for progress states */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  padding: 0 var(--space-2);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  color: var(--text-muted-color);
+  background: var(--surface-raised-color);
+}
+
+.badge-done {
+  color: var(--color-success);
+  border-color: var(--color-success);
+  background: var(--color-success-soft);
+}
+
+.badge-active {
+  color: var(--color-warning);
+  border-color: var(--color-warning);
+  background: var(--color-warning-soft);
+}
+
+/* Callout banners */
+.banner {
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--border-color);
+  border-left-width: 4px;
+  border-radius: var(--radius-md);
+  background: var(--surface-color);
+}
+
+.banner-success {
+  border-color: var(--color-success);
+  background: var(--color-success-soft);
+}
+
+.banner-warning {
+  border-color: var(--color-warning);
+  background: var(--color-warning-soft);
+}
+
+.banner-danger {
+  border-color: var(--color-danger);
+  background: var(--color-danger-soft);
+}
+
+/* Breadcrumb trail */
+.breadcrumbs {
+  font-size: var(--font-size-sm);
+  margin-bottom: var(--space-2);
+  color: var(--text-muted-color);
+}
+
+.breadcrumbs a {
+  color: var(--text-muted-color);
+  text-decoration: none;
+}
+
+.breadcrumbs a:hover {
+  color: var(--color-primary-strong);
+  text-decoration: underline;
+}
+
+/* Rendered markdown (course/chapter/exercise descriptions) */
+.prose {
+  max-width: 70ch;
+}
+
+.prose p,
+.prose ol,
+.prose ul {
+  margin-block: var(--space-3);
+}
+
+.prose pre {
+  padding: var(--space-3);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-color);
+  border-left: 4px solid var(--gb-bg3);
+  overflow-x: auto;
+  font-size: var(--font-size-sm);
+}
+
+/*
+ * Shiki dual-theme switching. Code blocks are highlighted with gruvbox
+ * light/dark at build time (astro.config shikiConfig, defaultColor: false) —
+ * each token carries --shiki-light/--shiki-dark variables and these rules
+ * pick one. html[data-theme] is the manual pin set by Layout.astro; without
+ * it the OS preference decides.
+ */
+.astro-code {
+  background-color: var(--editor-bg) !important;
+}
+
+.astro-code,
+.astro-code span {
+  color: var(--shiki-light);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) .astro-code,
+  :root:not([data-theme='light']) .astro-code span {
+    color: var(--shiki-dark);
+  }
+}
+
+:root[data-theme='dark'] .astro-code,
+:root[data-theme='dark'] .astro-code span {
+  color: var(--shiki-dark);
+}
+
+.prose h2 {
+  font-size: var(--font-size-lg);
+  margin-top: var(--space-5);
+  color: var(--gb-yellow);
+}
+
+.prose h2::before {
+  content: '## ';
+  color: var(--text-muted-color);
+}
+
 /* Data tables */
 .table-wrap {
   border: 1px solid var(--border-color);
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius-md);
   overflow-x: auto;
   background: var(--surface-color);
-  box-shadow: var(--shadow-1);
 }
 
 .data-table {
@@ -202,6 +350,7 @@ main.page {
   font-weight: 700;
   padding: var(--space-2) var(--space-3);
   border-bottom: 1px solid var(--border-color);
+  background: var(--surface-raised-color);
 }
 
 .data-table td {
@@ -212,4 +361,8 @@ main.page {
 
 .data-table tbody tr:last-child td {
   border-bottom: none;
+}
+
+.data-table tbody tr:hover td {
+  background: color-mix(in srgb, var(--surface-raised-color) 50%, transparent);
 }

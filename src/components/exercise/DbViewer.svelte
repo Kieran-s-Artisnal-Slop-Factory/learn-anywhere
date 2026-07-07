@@ -20,9 +20,15 @@
 {#if tables.length === 0}
   <p class="muted">No tables in the database yet.</p>
 {:else}
-  <div class="row tabs">
+  <div class="tabs" role="tablist">
     {#each tables as table (table)}
-      <button class="btn btn-sm" class:btn-primary={table === active} onclick={() => onSelect(table)}>
+      <button
+        class="tab"
+        class:active={table === active}
+        role="tab"
+        aria-selected={table === active}
+        onclick={() => onSelect(table)}
+      >
         {table}
       </button>
     {/each}
@@ -33,7 +39,7 @@
         <thead>
           <tr>
             {#each view.columns as col (col.name)}
-              <th>{col.name} <span class="muted coltype">{col.type}</span></th>
+              <th>{col.name} <span class="coltype">{col.type.toLowerCase()}</span></th>
             {/each}
           </tr>
         </thead>
@@ -41,30 +47,71 @@
           {#each view.rows as row, i (i)}
             <tr>
               {#each view.columns as col (col.name)}
-                <td>{row[col.name] === null ? 'NULL' : String(row[col.name])}</td>
+                {#if row[col.name] === null}
+                  <td class="null-cell">NULL</td>
+                {:else}
+                  <td>{String(row[col.name])}</td>
+                {/if}
               {/each}
             </tr>
           {/each}
         </tbody>
       </table>
     </div>
-    {#if view.rows.length === 0}
-      <p class="muted">Table is empty.</p>
-    {:else}
-      <p class="muted">First 50 rows.</p>
-    {/if}
+    <p class="muted note">
+      {#if view.rows.length === 0}
+        Table is empty.
+      {:else}
+        First 50 rows.
+      {/if}
+    </p>
   {/if}
 {/if}
 
 <style>
   .tabs {
+    display: flex;
     gap: var(--space-1);
     margin-bottom: var(--space-3);
     flex-wrap: wrap;
+    border-bottom: 1px solid var(--border-color);
+  }
+
+  .tab {
+    background: none;
+    border: none;
+    border-bottom: 2px solid transparent;
+    padding: var(--space-1) var(--space-3);
+    cursor: pointer;
+    color: var(--text-muted-color);
+    font-weight: 600;
+    font-size: var(--font-size-sm);
+  }
+
+  .tab:hover {
+    color: var(--text-color);
+  }
+
+  .tab.active {
+    color: var(--color-primary-strong);
+    border-bottom-color: var(--color-primary);
   }
 
   .coltype {
     font-weight: 400;
+    text-transform: none;
+    letter-spacing: 0;
+    color: var(--syntax-type);
+  }
+
+  .null-cell {
+    color: var(--text-muted-color);
+    font-style: italic;
     font-size: var(--font-size-sm);
+  }
+
+  .note {
+    font-size: var(--font-size-sm);
+    margin-top: var(--space-2);
   }
 </style>

@@ -1,6 +1,8 @@
 ---
-// Course overview — statically rendered description + chapter list; the
-// island handles enrollment (bundle copy into IndexedDB) and progress.
+// Course page — the single navigation hub for a course: description,
+// enroll / continue quick-access, and every chapter with its exercises.
+// (Chapter overviews were folded in here; exercise pages link back to
+// `#<chapter-slug>` anchors.)
 import { render } from 'astro:content';
 import Layout from '../../../layouts/Layout.astro';
 import CourseOverviewApp from '../../../components/course/CourseOverviewApp.svelte';
@@ -14,33 +16,25 @@ export async function getStaticPaths() {
 const { tree } = Astro.props;
 const bundle = toBundle(tree);
 const { Content } = await render(tree.course);
+const exerciseCount = bundle.exercises.length;
 ---
 
 <Layout title={tree.course.data.title}>
   <nav class="breadcrumbs">
-    <a href="/courses/">Courses</a>
+    <a href="/courses/">courses</a> / {tree.course.id}
   </nav>
   <div class="page-header">
     <h1>{tree.course.data.title}</h1>
+    <span class="muted">{bundle.chapters.length} chapters · {exerciseCount} exercises</span>
   </div>
-  <div class="prose">
+  <div class="prose description">
     <Content />
   </div>
   <CourseOverviewApp client:only="svelte" {bundle} />
 </Layout>
 
 <style>
-  .breadcrumbs {
-    font-size: var(--font-size-sm);
-    margin-bottom: var(--space-2);
-  }
-
-  .prose {
-    margin-bottom: var(--space-4);
-    max-width: 65ch;
-  }
-
-  .prose :global(p) {
-    margin-block: var(--space-3);
+  .description {
+    margin-bottom: var(--space-5);
   }
 </style>

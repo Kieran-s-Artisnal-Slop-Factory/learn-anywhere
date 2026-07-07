@@ -33,19 +33,19 @@
   {#each courses as course (course.slug)}
     {@const row = rowFor(course.slug)}
     <Card title={course.title}>
-      <p class="muted counts">{course.chapterCount} chapters · {course.exerciseCount} exercises</p>
-      <p class="blurb">{course.blurb}</p>
-      <div class="row meta">
+      {#snippet actions()}
         {#if row?.completed}
-          <span class="badge done">completed</span>
+          <span class="badge badge-done">✓ completed</span>
         {:else if row?.started}
-          <span class="badge">in progress</span>
+          <span class="badge badge-active">in progress</span>
         {:else if row}
           <span class="badge">enrolled</span>
         {/if}
-      </div>
+      {/snippet}
+      <p class="muted counts">{course.chapterCount} chapters · {course.exerciseCount} exercises</p>
+      <p class="blurb">{course.blurb}</p>
       <a class="btn btn-primary" href={`/courses/${course.slug}/`}>
-        {row?.started ? 'Continue' : 'View course'}
+        {row?.started && !row?.completed ? 'Continue →' : 'View course →'}
       </a>
     </Card>
   {:else}
@@ -59,23 +59,7 @@
   }
 
   .blurb {
-    margin-block: var(--space-2);
-  }
-
-  .meta {
-    margin-bottom: var(--space-3);
-  }
-
-  .badge {
-    font-size: var(--font-size-sm);
-    padding: 0 var(--space-2);
-    border: 1px solid var(--border-color);
-    border-radius: var(--radius-full);
-    color: var(--text-muted-color);
-  }
-
-  .badge.done {
-    color: var(--color-primary-strong);
-    border-color: var(--color-primary);
+    margin-block: var(--space-2) var(--space-4);
+    max-width: 65ch;
   }
 </style>

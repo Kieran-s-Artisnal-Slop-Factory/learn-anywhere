@@ -2,32 +2,79 @@
  * lite-learner theme — all configurable design tokens live here.
  * Uses light-dark() so both themes are defined in one place;
  * color-scheme on :root makes the browser honor the user preference.
+ *
+ * Palette: gruvbox (https://github.com/morhetz/gruvbox). The raw palette
+ * lives in --gb-* variables; everything else maps semantics onto it, so
+ * re-theming means touching only this file.
  */
 :root {
   color-scheme: light dark;
 
-  /* Brand */
-  --color-primary: light-dark(#017ab7, #4b86b9);
-  --color-primary-strong: light-dark(#01517a, #77a4ca);
-  --color-primary-soft: light-dark(#def2fc, #19242f);
-  --color-on-primary: #ffffff;
+  /* ── Gruvbox palette ─────────────────────────────────────────────── */
+  /* Backgrounds (light mode uses the light set, dark the dark set) */
+  --gb-bg0: light-dark(#fbf1c7, #282828);
+  --gb-bg0-soft: light-dark(#f9f5d7, #32302f);
+  --gb-bg1: light-dark(#ebdbb2, #3c3836);
+  --gb-bg2: light-dark(#d5c4a1, #504945);
+  --gb-bg3: light-dark(#bdae93, #665c54);
 
-  /* Surfaces */
-  --bg-color: light-dark(#f7f9f9, #101413);
-  --surface-color: light-dark(#ffffff, #161623);
-  --surface-raised-color: light-dark(#ffffff, color-mix(in srgb, #161623 88%, white));
-  --border-color: light-dark(color-mix(in srgb, #ffffff 88%, black), color-mix(in srgb, #161623 78%, white));
+  /* Foregrounds */
+  --gb-fg: light-dark(#3c3836, #ebdbb2);
+  --gb-fg-muted: light-dark(#7c6f64, #a89984);
+  --gb-gray: #928374;
 
-  /* Text */
-  --text-color: light-dark(#1c2321, #ecf1f0);
-  --text-muted-color: light-dark(color-mix(in srgb, #1c2321 65%, #f7f9f9), color-mix(in srgb, #ecf1f0 65%, #101413));
+  /* Accents — faded variants for light mode, bright for dark mode */
+  --gb-red: light-dark(#9d0006, #fb4934);
+  --gb-green: light-dark(#79740e, #b8bb26);
+  --gb-yellow: light-dark(#b57614, #fabd2f);
+  --gb-blue: light-dark(#076678, #83a598);
+  --gb-purple: light-dark(#8f3f71, #d3869b);
+  --gb-aqua: light-dark(#427b58, #8ec07c);
+  --gb-orange: light-dark(#af3a03, #fe8019);
+  --gb-orange-strong: light-dark(#8f2f02, #d65d0e);
 
-  /* Feedback */
-  --color-success: light-dark(#1a7f37, #4ade80);
-  --color-danger: light-dark(#c62828, #f87171);
-  --color-warning: light-dark(#b45309, #fbbf24);
+  /* ── Brand ───────────────────────────────────────────────────────── */
+  --color-primary: var(--gb-orange);
+  --color-primary-strong: var(--gb-orange-strong);
+  --color-primary-soft: color-mix(in srgb, var(--gb-orange) 14%, var(--gb-bg0));
+  --color-on-primary: light-dark(#fbf1c7, #282828);
 
-  /* Typography */
+  /* ── Surfaces ────────────────────────────────────────────────────── */
+  --bg-color: var(--gb-bg0);
+  --surface-color: var(--gb-bg0-soft);
+  --surface-raised-color: var(--gb-bg1);
+  --border-color: var(--gb-bg2);
+
+  /* ── Text ────────────────────────────────────────────────────────── */
+  --text-color: var(--gb-fg);
+  --text-muted-color: var(--gb-fg-muted);
+
+  /* ── Feedback ────────────────────────────────────────────────────── */
+  --color-success: var(--gb-green);
+  --color-success-soft: color-mix(in srgb, var(--gb-green) 14%, var(--gb-bg0));
+  --color-danger: var(--gb-red);
+  --color-danger-soft: color-mix(in srgb, var(--gb-red) 12%, var(--gb-bg0));
+  --color-warning: var(--gb-yellow);
+  --color-warning-soft: color-mix(in srgb, var(--gb-yellow) 14%, var(--gb-bg0));
+  --color-info: var(--gb-blue);
+
+  /* ── Editor / syntax (CodeMirror + rendered code blocks) ────────── */
+  --editor-bg: var(--gb-bg0-soft);
+  --editor-gutter-bg: var(--gb-bg1);
+  --editor-gutter-fg: var(--gb-gray);
+  --editor-active-line: color-mix(in srgb, var(--gb-bg1) 60%, transparent);
+  --editor-selection: color-mix(in srgb, var(--gb-bg2) 75%, transparent);
+  --editor-cursor: var(--gb-orange);
+  --syntax-keyword: var(--gb-red);
+  --syntax-string: var(--gb-green);
+  --syntax-number: var(--gb-purple);
+  --syntax-comment: var(--gb-gray);
+  --syntax-type: var(--gb-yellow);
+  --syntax-operator: var(--gb-aqua);
+  --syntax-name: var(--gb-blue);
+  --syntax-punctuation: var(--gb-fg-muted);
+
+  /* ── Typography ──────────────────────────────────────────────────── */
   --font-body: ui-monospace, "Cascadia Code", Consolas, "SF Mono", monospace;
   --font-size-sm: 0.85rem;
   --font-size-base: 1rem;
@@ -36,7 +83,7 @@
   --font-size-2xl: 2rem;
   --line-height: 1.55;
 
-  /* Spacing */
+  /* ── Spacing ─────────────────────────────────────────────────────── */
   --space-1: 0.25rem;
   --space-2: 0.5rem;
   --space-3: 0.75rem;
@@ -44,17 +91,17 @@
   --space-5: 1.5rem;
   --space-6: 2.5rem;
 
-  /* Shape */
-  --radius-sm: 10px;
-  --radius-md: 16px;
-  --radius-lg: 24px;
+  /* ── Shape — gruvbox is boxy; keep radii tight ───────────────────── */
+  --radius-sm: 3px;
+  --radius-md: 5px;
+  --radius-lg: 7px;
   --radius-full: 999px;
 
-  /* Elevation */
-  --shadow-1: 0 1px 3px light-dark(rgb(0 0 0 / 0.08), rgb(0 0 0 / 0.4));
-  --shadow-2: 0 4px 16px light-dark(rgb(0 0 0 / 0.14), rgb(0 0 0 / 0.55));
+  /* ── Elevation ───────────────────────────────────────────────────── */
+  --shadow-1: 0 1px 3px light-dark(rgb(60 56 54 / 0.12), rgb(0 0 0 / 0.4));
+  --shadow-2: 0 4px 16px light-dark(rgb(60 56 54 / 0.18), rgb(0 0 0 / 0.55));
 
-  /* Layout */
-  --page-max-width: 60rem;
+  /* ── Layout ──────────────────────────────────────────────────────── */
+  --page-max-width: 70rem;
   --navbar-height: 3.5rem;
 }

@@ -26,10 +26,13 @@ const swPath = import.meta.env.BASE_URL.replace(/\/$/, '') + '/sw.js';
     <script is:inline>
       // Apply the manual theme override before first paint to avoid a flash.
       // 'light'/'dark' pin the scheme; anything else follows the OS setting.
+      // data-theme lets CSS that can't use light-dark() (e.g. Shiki's dual
+      // highlight variables) follow the same pin.
       try {
         const theme = localStorage.getItem('lite-learner-theme');
         if (theme === 'light' || theme === 'dark') {
           document.documentElement.style.colorScheme = theme;
+          document.documentElement.dataset.theme = theme;
         }
       } catch {}
     </script>

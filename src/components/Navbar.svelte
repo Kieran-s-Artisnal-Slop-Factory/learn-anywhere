@@ -4,14 +4,16 @@
 
   const links = [
     { href: '/', label: 'Home' },
-    { href: '/exercises/', label: 'Exercises' },
     { href: '/courses/', label: 'Courses' },
-    { href: '/chapters/', label: 'Chapters' },
     { href: '/settings/', label: 'Settings' },
   ];
 
   const normalize = (p: string) => p.replace(/\/+$/, '') || '/';
-  const isCurrent = (href: string) => normalize(href) === normalize(currentPath);
+  // Section-aware: /courses/… keeps Courses highlighted.
+  const isCurrent = (href: string) =>
+    href === '/'
+      ? normalize(currentPath) === '/'
+      : normalize(currentPath).startsWith(normalize(href));
 </script>
 
 <header class="navbar">

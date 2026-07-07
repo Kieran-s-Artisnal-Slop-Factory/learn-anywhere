@@ -156,119 +156,118 @@
 </script>
 
 <div class="stack">
-{#if bootError}
-  <p class="form-error">Failed to start the exercise engine: {bootError}</p>
-{/if}
-
-{#if completed}
-  <p class="completed-banner">
-    ✓ Completed {row?.completed ? new Date(row.completed).toLocaleDateString() : ''} — you can keep
-    experimenting or reset to start over.
-  </p>
-{/if}
-
-{#if restoredBanner}
-  <p class="warning-banner">
-    Your last solution was restored to the editor, but the database has been reset — re-run your
-    statements to restore its state.
-  </p>
-{/if}
-
-<Card title="SQL editor">
-  <SqlEditor bind:this={editor} onDocChange={scheduleSave} />
-  <div class="row toolbar">
-    <button class="btn btn-primary" onclick={run} disabled={booting}>Run</button>
-    <button class="btn" onclick={check} disabled={booting}>Check solution</button>
-    <button class="btn btn-danger" onclick={reset} disabled={booting}>Reset</button>
-  </div>
-  {#if sqlError}
-    <p class="sql-error">SQLite error: {sqlError}</p>
+  {#if bootError}
+    <p class="banner banner-danger">Failed to start the exercise engine: {bootError}</p>
   {/if}
-  {#if checked === 'pass'}
-    <p class="check-pass">✓ Correct — exercise complete!</p>
-  {:else if checked === 'fail'}
-    <p class="check-fail">✗ Not quite — the database doesn't match the expected state yet.</p>
-  {/if}
-</Card>
 
-{#if resultRows.length > 0}
-  {@const cols = Object.keys(resultRows[0]!)}
-  <Card title="Query results">
-    <div class="table-wrap">
-      <table class="data-table">
-        <thead>
-          <tr>
-            {#each cols as col (col)}
-              <th>{col}</th>
-            {/each}
-          </tr>
-        </thead>
-        <tbody>
-          {#each resultRows as resultRow, i (i)}
+  {#if completed}
+    <p class="banner banner-success">
+      ✓ Completed{row?.completed ? ` ${new Date(row.completed).toLocaleDateString()}` : ''} — keep
+      experimenting or reset to start over.
+    </p>
+  {/if}
+
+  {#if restoredBanner}
+    <p class="banner banner-warning">
+      Your last solution was restored to the editor, but the database has been reset — re-run your
+      statements to restore its state.
+    </p>
+  {/if}
+
+  <Card title="editor">
+    {#snippet actions()}
+      <span class="muted kbd-hint"><kbd>Ctrl</kbd>+<kbd>Enter</kbd> runs</span>
+    {/snippet}
+    <SqlEditor bind:this={editor} onDocChange={scheduleSave} onRun={run} />
+    <div class="row toolbar">
+      <button class="btn btn-primary" onclick={run} disabled={booting}>▶ Run</button>
+      <button class="btn" onclick={check} disabled={booting}>✓ Check solution</button>
+      <button class="btn btn-danger reset" onclick={reset} disabled={booting}>↺ Reset</button>
+    </div>
+    {#if sqlError}
+      <p class="banner banner-danger sql-error">{sqlError}</p>
+    {/if}
+    {#if checked === 'pass'}
+      <p class="banner banner-success feedback">✓ Correct — exercise complete!</p>
+    {:else if checked === 'fail'}
+      <p class="banner banner-warning feedback">
+        ✗ Not quite — the database doesn't match the expected state yet.
+      </p>
+    {/if}
+  </Card>
+
+  {#if resultRows.length > 0}
+    {@const cols = Object.keys(resultRows[0]!)}
+    <Card title="results">
+      {#snippet actions()}
+        <span class="muted kbd-hint">{resultRows.length} row{resultRows.length === 1 ? '' : 's'}</span>
+      {/snippet}
+      <div class="table-wrap">
+        <table class="data-table">
+          <thead>
             <tr>
               {#each cols as col (col)}
-                <td>{resultRow[col] === null ? 'NULL' : String(resultRow[col])}</td>
+                <th>{col}</th>
               {/each}
             </tr>
-          {/each}
-        </tbody>
-      </table>
-    </div>
-  </Card>
-{/if}
-
-<Card title="Database">
-  {#if booting}
-    <p class="muted">Starting SQLite…</p>
-  {:else}
-    <DbViewer {tables} active={activeTable} view={tableView} onSelect={(name) => {
-      activeTable = name;
-      client?.tableData(name).then((data) => (tableView = data));
-    }} />
+          </thead>
+          <tbody>
+            {#each resultRows as resultRow, i (i)}
+              <tr>
+                {#each cols as col (col)}
+                  <td>{resultRow[col] === null ? 'NULL' : String(resultRow[col])}</td>
+                {/each}
+              </tr>
+            {/each}
+          </tbody>
+        </table>
+      </div>
+    </Card>
   {/if}
-</Card>
+
+  <Card title="database">
+    {#if booting}
+      <p class="muted">Starting SQLite…</p>
+    {:else}
+      <DbViewer {tables} active={activeTable} view={tableView} onSelect={(name) => {
+        activeTable = name;
+        client?.tableData(name).then((data) => (tableView = data));
+      }} />
+    {/if}
+  </Card>
 </div>
 
 <style>
   .toolbar {
     margin-top: var(--space-3);
-    gap: var(--space-2);
+  }
+
+  .toolbar .reset {
+    margin-left: auto;
   }
 
   .sql-error {
-    color: var(--color-danger);
-    font-family: ui-monospace, monospace;
+    font-family: var(--font-body);
     font-size: var(--font-size-sm);
     margin-top: var(--space-3);
-  }
-
-  .form-error {
     color: var(--color-danger);
   }
 
-  .check-pass {
-    color: var(--color-success, #15803d);
+  .feedback {
+    margin-top: var(--space-3);
     font-weight: 600;
-    margin-top: var(--space-3);
   }
 
-  .check-fail {
-    color: var(--color-danger);
-    margin-top: var(--space-3);
+  .kbd-hint {
+    font-size: var(--font-size-sm);
   }
 
-  .completed-banner {
-    padding: var(--space-2) var(--space-3);
-    border: 1px solid var(--color-primary);
-    border-radius: var(--radius-lg);
-    color: var(--color-primary-strong);
-    background: var(--color-primary-soft);
-  }
-
-  .warning-banner {
-    padding: var(--space-2) var(--space-3);
-    border: 1px solid var(--color-warning, #b45309);
-    border-radius: var(--radius-lg);
-    color: var(--color-warning, #b45309);
+  kbd {
+    border: 1px solid var(--border-color);
+    border-bottom-width: 2px;
+    border-radius: var(--radius-sm);
+    padding: 0 var(--space-1);
+    font-size: 0.75rem;
+    background: var(--surface-raised-color);
   }
 </style>

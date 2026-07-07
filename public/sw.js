@@ -22,7 +22,7 @@ const ASSET_PREFIX = BASE + '_astro/';
 // Fallback when the build-time manifest can't be fetched. precache.json is
 // generated from the content collections and includes every course, chapter,
 // and exercise page.
-const PRECACHE_FALLBACK = ['', 'exercises/', 'courses/', 'chapters/', 'settings/', 'onboarding/', 'spike/', 'favicon.svg'];
+const PRECACHE_FALLBACK = ['', 'courses/', 'settings/', 'onboarding/', 'spike/', 'favicon.svg'];
 
 async function precacheList() {
   try {
