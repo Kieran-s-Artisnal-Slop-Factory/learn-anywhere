@@ -30,6 +30,9 @@ Development notes:
   test offline behavior against `npm run preview` instead.
 - A throwaway engine test page lives at `/spike` — handy when poking at the
   SQLite worker without an exercise around it.
+- The site is an installable PWA (`public/manifest.webmanifest` + the service
+  worker). The PNG icons in `public/icons/` are generated — re-run
+  `node scripts/generate-icons.mjs` if the brand colors change.
 
 ## Deploy
 
