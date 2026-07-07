@@ -92,7 +92,9 @@ From the user perspective:
                     - e.g. I have a query like `SELECT age FROM users ORDER BY age;`, then the solution JSON would look like `{query:"SELECT age FROM users ORDER BY age;", rows:[{"age":21}, {"age":30}]}` the only thing that matters is the values of the age, not the state of any other columns in the rows when the validation check is run
                 - This should support inspecting tables
                     - e.g. I have a query like `PRAGMA table_info('table_name');`
-        2. Exercises; These contain a description of an exercise for someone to complete
+        2. Exercises; These markdown files contain a description of an exercise for someone to complete
+        3. Chapters: These markdown files contain a description of a chapter, and it's constituent exercises
+        4. Courses; These markdown files contain details about the course, and it's constituent chapters
 - Svelte for reactivity
     - Use svelte 5 with runes
 - IndexDB to persist user state
