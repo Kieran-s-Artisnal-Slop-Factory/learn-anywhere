@@ -87,6 +87,76 @@ async function validate(sql: string): Promise<void> {
   }
 }
 
+/** SQL literal for a value read back from the DB (INTEGER/REAL/TEXT/BLOB/NULL). */
+function quoteValue(v: unknown): string {
+  if (v === null || v === undefined) return 'NULL';
+  if (typeof v === 'bigint') return v.toString();
+  if (typeof v === 'number') return Number.isFinite(v) ? String(v) : 'NULL';
+  if (v instanceof Uint8Array) {
+    return "X'" + Array.from(v, (b) => b.toString(16).padStart(2, '0')).join('') + "'";
+  }
+  return "'" + String(v).replaceAll("'", "''") + "'";
+}
+
+/** Double-quote an identifier, escaping embedded quotes. */
+const quoteId = (name: string): string => '"' + name.replaceAll('"', '""') + '"';
+
+/**
+ * Serialize the whole database to re-runnable SQL — our own `.dump`, since the
+ * WASM build has no shell. Emits each table's schema followed by INSERTs, then
+ * indexes/triggers/views. Generated columns are skipped in the INSERT column
+ * list (you can't write them); virtual tables (FTS5, R*Tree) are dumped by
+ * their logical columns and their internal shadow tables are omitted.
+ */
+async function dump(): Promise<string> {
+  const database = await ensureDb();
+  const query = (sql: string): Row[] => {
+    const out: Row[] = [];
+    database.exec({ sql, rowMode: 'object', callback: (row) => void out.push(row as Row) });
+    return out;
+  };
+
+  const objects = query(
+    "SELECT type, name, sql FROM sqlite_master WHERE sql IS NOT NULL AND name NOT LIKE 'sqlite_%' ORDER BY rowid;"
+  );
+  const tables = objects.filter((o) => o.type === 'table');
+  const virtualNames = tables
+    .filter((t) => /^\s*CREATE\s+VIRTUAL\s+TABLE/i.test(String(t.sql)))
+    .map((t) => String(t.name));
+  // A virtual table's shadow tables are named "<vtab>_something".
+  const isShadow = (name: string) =>
+    virtualNames.some((vt) => name !== vt && name.startsWith(vt + '_'));
+
+  const lines: string[] = ['PRAGMA foreign_keys=OFF;', 'BEGIN TRANSACTION;'];
+
+  for (const t of tables) {
+    const name = String(t.name);
+    if (isShadow(name)) continue;
+    lines.push(String(t.sql) + ';');
+    // hidden = 0 excludes generated columns (and other non-writable columns).
+    const cols = query(
+      `SELECT name FROM pragma_table_xinfo(${quoteValue(name)}) WHERE hidden = 0 ORDER BY cid;`
+    ).map((c) => String(c.name));
+    if (cols.length === 0) continue;
+    const colList = cols.map(quoteId).join(', ');
+    for (const r of query(`SELECT ${colList} FROM ${quoteId(name)};`)) {
+      lines.push(
+        `INSERT INTO ${quoteId(name)} (${colList}) VALUES (${cols.map((c) => quoteValue(r[c])).join(', ')});`
+      );
+    }
+  }
+
+  // Indexes, triggers, and views after all table data (so restore doesn't fire
+  // triggers or hit half-built views).
+  for (const o of objects) {
+    if (o.type === 'table' || isShadow(String(o.name))) continue;
+    lines.push(String(o.sql) + ';');
+  }
+
+  lines.push('COMMIT;');
+  return lines.join('\n');
+}
+
 /** Table names, alphabetical (the DB viewer opens the first one). */
 async function listTables(): Promise<string[]> {
   const rows = await exec(
@@ -138,6 +208,9 @@ self.onmessage = async (event: MessageEvent<SqlRequest>) => {
         break;
       case 'tableData':
         reply({ id: msg.id, ok: true, result: await tableData(msg.name) });
+        break;
+      case 'dump':
+        reply({ id: msg.id, ok: true, result: await dump() });
         break;
     }
   } catch (err) {

@@ -36,6 +36,15 @@ const MIGRATIONS: Migration[] = [
       tx.objectStore(name).clear();
     }
   },
+  // v3 — add the `playground` store: a single row holding the free-form
+  // playground's editor buffer and the user's saved database snapshot (a SQL
+  // dump re-run on load). It's local-only scratch, deliberately kept out of the
+  // STORES map so the content-sync and export/import flows never touch it.
+  (db) => {
+    if (!db.objectStoreNames.contains('playground')) {
+      db.createObjectStore('playground', { keyPath: 'id' });
+    }
+  },
 ];
 
 export const DB_VERSION = MIGRATIONS.length;

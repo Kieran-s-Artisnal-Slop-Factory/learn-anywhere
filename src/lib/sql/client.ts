@@ -56,6 +56,11 @@ export class SqlClient {
     return this.#send({ type: 'tableData', name });
   }
 
+  /** Serialize the whole database to re-runnable SQL (schema + data). */
+  dump(): Promise<string> {
+    return this.#send({ type: 'dump' });
+  }
+
   /** Run the solution query against the current DB and compare. */
   async checkSolution(desired: DesiredState): Promise<boolean> {
     const actual = await this.exec(desired.query);
