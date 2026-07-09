@@ -5,6 +5,7 @@
   import { all } from '../../lib/db/repo';
   import type { Courses } from '../../lib/db/types';
   import Card from '../Card.svelte';
+  import { href } from '../../lib/paths';
 
   interface CourseCard {
     slug: string;
@@ -44,7 +45,7 @@
       {/snippet}
       <p class="muted counts">{course.chapterCount} chapters · {course.lessonCount} lessons</p>
       <p class="blurb">{course.blurb}</p>
-      <a class="btn btn-primary" href={`/courses/${course.slug}/`}>
+      <a class="btn btn-primary" href={href(`/courses/${course.slug}/`)}>
         {row?.started && !row?.completed ? 'Continue →' : 'View course →'}
       </a>
     </Card>

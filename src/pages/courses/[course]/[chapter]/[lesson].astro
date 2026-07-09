@@ -13,6 +13,7 @@ import {
   lessonContent,
   loadCourseTrees,
 } from '../../../../lib/content/bundle';
+import {href} from '../../../../lib/paths';
 
 export async function getStaticPaths() {
   const trees = await loadCourseTrees();
@@ -48,13 +49,13 @@ const { Content } = await render(lesson);
 const isExercise = lesson.data.desired_state !== undefined;
 // Prose-only readings have no workspace worth a second column.
 const hasDb = lesson.data.initial_sql !== undefined;
-const courseHref = `/courses/${course.id}/`;
-const chapterHref = `/courses/${chapter.id}/`;
+const courseHref = href(`/courses/${course.id}/`);
+const chapterHref = href(`/courses/${chapter.id}/`);
 ---
 
 <Layout title={lesson.data.title}>
   <nav class="breadcrumbs">
-    <a href="/courses/">courses</a> /
+    <a href={href('/courses/')}>courses</a> /
     <a href={courseHref}>{course.data.title}</a> /
     <a href={chapterHref}>{chapter.data.title}</a>
   </nav>
@@ -85,7 +86,7 @@ const chapterHref = `/courses/${chapter.id}/`;
   <nav class="pager">
     {
       prev ? (
-        <a class="btn" href={`/courses/${prev.lesson.id}/`}>
+        <a class="btn" href={href(`/courses/${prev.lesson.id}/`)}>
           ← {prev.lesson.data.title}
         </a>
       ) : (
@@ -96,7 +97,7 @@ const chapterHref = `/courses/${chapter.id}/`;
     }
     {
       next ? (
-        <a class="btn" href={`/courses/${next.lesson.id}/`}>
+        <a class="btn" href={href(`/courses/${next.lesson.id}/`)}>
           {next.lesson.data.title} →
         </a>
       ) : (

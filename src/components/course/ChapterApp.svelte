@@ -11,6 +11,7 @@
   import type { ChapterContent, CourseContent, LessonContent } from '../../lib/content/types';
   import { syncChapter, syncCourse, syncLesson } from '../../lib/content/sync';
   import Card from '../Card.svelte';
+  import {href as linkCorrector} from '../../lib/paths';
 
   let {
     course,
@@ -26,7 +27,7 @@
   let chapterRow: Chapters | null = $state(null);
   let lessonRows = $state<Map<string, Lessons>>(new Map());
 
-  const href = (slug: string) => `/courses/${slug}/`;
+  const href = (slug: string) => linkCorrector(`/courses/${slug}/`);
 
   const done = $derived([...lessonRows.values()].filter((l) => l.completed).length);
   const continueLesson = $derived(

@@ -11,6 +11,7 @@
   import { onMount } from 'svelte';
   import { all } from '../../lib/db/repo';
   import type { Chapters, Courses, Lessons } from '../../lib/db/types';
+  import { href } from '../../lib/paths';
 
   interface Item {
     kind: 'lesson' | 'chapter' | 'course';
@@ -52,7 +53,7 @@
           kind: 'lesson',
           title: lesson.title,
           context: chapterOfLesson(lesson)?.title ?? '',
-          href: `/courses/${lesson.id}/`,
+          href: href(`/courses/${lesson.id}/`),
           when: lesson.started,
         });
       }
@@ -63,7 +64,7 @@
           kind: 'course',
           title: course.title,
           context: `${course.chapters.filter((slug) => chapters.find((c) => c.id === slug)?.completed).length}/${course.chapters.length} chapters done`,
-          href: `/courses/${course.id}/`,
+          href: href(`/courses/${course.id}/`),
           when: course.started,
         });
       }
@@ -78,7 +79,7 @@
         kind: 'lesson',
         title: lesson.title,
         context: chapterOfLesson(lesson)?.title ?? '',
-        href: `/courses/${lesson.id}/`,
+        href: href(`/courses/${lesson.id}/`),
         when: lesson.completed,
       });
     }
@@ -88,7 +89,7 @@
         kind: 'chapter',
         title: chapter.title,
         context: courseById.get(chapter.id.split('/')[0]!)?.title ?? '',
-        href: `/courses/${chapter.id}/`,
+        href: href(`/courses/${chapter.id}/`),
         when: chapter.completed,
       });
     }
@@ -98,7 +99,7 @@
         kind: 'course',
         title: course.title,
         context: `${course.chapters.length} chapters`,
-        href: `/courses/${course.id}/`,
+        href: href(`/courses/${course.id}/`),
         when: course.completed,
       });
     }
@@ -170,7 +171,7 @@
     {#if inProgress.length === 0 && recentlyCompleted.length === 0}
       <p class="muted">
         You're enrolled but haven't started an exercise yet —
-        <a href="/courses/">jump into a course</a>.
+        <a href={href('/courses/')}>jump into a course</a>.
       </p>
     {/if}
   </div>

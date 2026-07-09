@@ -5,6 +5,7 @@ import svelte from '@astrojs/svelte';
 
 // https://astro.build/config
 export default defineConfig({
+  base:"/lite-learner",
   integrations: [svelte()],
   markdown: {
     // Dual gruvbox themes; defaultColor:false emits --shiki-light/--shiki-dark

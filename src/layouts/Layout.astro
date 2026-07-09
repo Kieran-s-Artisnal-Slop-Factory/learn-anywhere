@@ -1,6 +1,7 @@
 ---
 import '../styles/theme.css';
 import '../styles/global.css';
+import { href } from '../lib/paths';
 import Navbar from '../components/Navbar.svelte';
 
 interface Props {
@@ -9,22 +10,20 @@ interface Props {
 
 const { title } = Astro.props;
 const currentPath = Astro.url.pathname;
-// Thread the configured base to the inline SW registration script, so the
-// worker registers at the right scope on subpath deploys (e.g. GitHub Pages).
-const base = import.meta.env.BASE_URL.replace(/\/$/, '');
-const swPath = base + '/sw.js';
+const swPath = href('/sw.js');
+const onboardingPath = href('/onboarding/');
 ---
 
 <!doctype html>
-<html lang="en" data-sw-path={swPath}>
+<html lang="en" data-sw-path={swPath} data-onboarding-path={onboardingPath}>
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="color-scheme" content="light dark" />
     <meta name="description" content="lite-learner — local-first app" />
-    <link rel="icon" href={`${base}/favicon.svg`} type="image/svg+xml" />
-    <link rel="manifest" href={`${base}/manifest.webmanifest`} />
-    <link rel="apple-touch-icon" href={`${base}/icons/icon-192.png`} />
+    <link rel="icon" href={href('/favicon.svg')} type="image/svg+xml" />
+    <link rel="manifest" href={href('/manifest.webmanifest')} />
+    <link rel="apple-touch-icon" href={href('/icons/icon-192.png')} />
     <meta name="theme-color" media="(prefers-color-scheme: light)" content="#fbf1c7" />
     <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#282828" />
     <title>{title} · lite-learner</title>
@@ -45,16 +44,16 @@ const swPath = base + '/sw.js';
         }
       } catch {}
     </script>
-    <script is:inline>
+    <script is:inline define:vars={{ onboardingPath }}>
       // First-run gate: send new users through onboarding once (MPA — runs on
       // every page). Storage failures fall through to the app rather than
       // trapping the user in a redirect loop.
       try {
         if (
-          !location.pathname.startsWith('/onboarding') &&
+          (!location.pathname.endsWith('/onboarding/') && !location.pathname.endsWith('/onboarding')) &&
           !localStorage.getItem('lite-learner-onboarded')
         ) {
-          location.replace('/onboarding/');
+          location.replace(onboardingPath);
         }
       } catch {}
     </script>

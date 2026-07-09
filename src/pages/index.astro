@@ -4,12 +4,13 @@
 // is enrolled, so first-time visitors only see the intro.
 import Layout from '../layouts/Layout.astro';
 import HomeApp from '../components/apps/HomeApp.svelte';
+import { href } from '../lib/paths.js';
 ---
 
 <Layout title="Home">
   <div class="page-header">
     <h1>lite-learner</h1>
-    <a class="btn btn-primary" href="/courses/">Browse courses →</a>
+    <a class="btn btn-primary" href={href('/courses/')}>Browse courses →</a>
   </div>
 
   <section class="intro">

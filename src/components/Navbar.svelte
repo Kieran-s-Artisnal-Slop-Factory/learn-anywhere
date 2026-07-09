@@ -1,12 +1,13 @@
 <script lang="ts">
+  import {href} from '../lib/paths';
   let { currentPath = '/' }: { currentPath?: string } = $props();
   let open = $state(false);
 
   const links = [
-    { href: '/', label: 'Home' },
-    { href: '/courses/', label: 'Courses' },
-    { href: '/playground/', label: 'Playground' },
-    { href: '/settings/', label: 'Settings' },
+    { href: href('/'), label: 'Home' },
+    { href: href('/courses/'), label: 'Courses' },
+    { href: href('/playground/'), label: 'Playground' },
+    { href: href('/settings/'), label: 'Settings' },
   ];
 
   const normalize = (p: string) => p.replace(/\/+$/, '') || '/';
@@ -18,7 +19,7 @@
 </script>
 
 <header class="navbar">
-  <a class="brand" href="/">lite-learner</a>
+  <a class="brand" href={href('/')}>lite-learner</a>
 
   <button
     class="hamburger"

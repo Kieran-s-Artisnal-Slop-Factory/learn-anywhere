@@ -11,6 +11,7 @@
   import type { ChapterContent, CourseContent, LessonContent } from '../../lib/content/types';
   import { syncCourseBundle } from '../../lib/content/sync';
   import Card from '../Card.svelte';
+  import {href as linkCorrector} from '../../lib/paths';
 
   interface Bundle {
     course: CourseContent;
@@ -52,7 +53,7 @@
   });
 
   // Slugs are path ids, so they double as the URL path under /courses/.
-  const href = (slug: string) => `/courses/${slug}/`;
+  const href = (slug: string) => linkCorrector(`/courses/${slug}/`);
 
   function chapterDone(chapter: ChapterContent): number {
     return chapter.lessons.filter((slug) => lessonRows.get(slug)?.completed).length;

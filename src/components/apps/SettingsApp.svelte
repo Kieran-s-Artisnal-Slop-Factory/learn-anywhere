@@ -10,6 +10,7 @@
   import { requestPersistentStorage, type PersistState } from '../../lib/db/persistence';
   import { getEditorScheme, setEditorScheme, type EditorScheme } from '../../lib/editorTheme';
   import { getPalette, setPalette, PALETTES, type Palette } from '../../lib/palette';
+  import {href} from '../../lib/paths';
 
   const THEME_KEY = 'lite-learner-theme';
 
@@ -101,7 +102,7 @@
     }
     await clearAllData();
     localStorage.removeItem('lite-learner-onboarded');
-    location.href = '/onboarding/';
+    location.href = href('/onboarding/');
   }
 </script>
 

@@ -10,6 +10,7 @@ import {
   lessonContent,
   loadCourseTrees,
 } from '../../../../lib/content/bundle';
+import {href} from '../../../../lib/paths';
 
 export async function getStaticPaths() {
   const trees = await loadCourseTrees();
@@ -29,8 +30,8 @@ const readingCount = lessons.length - exerciseCount;
 
 <Layout title={chapter.data.title}>
   <nav class="breadcrumbs">
-    <a href="/courses/">courses</a> /
-    <a href={`/courses/${course.id}/`}>{course.data.title}</a>
+    <a href={href('/courses/')}>courses</a> /
+    <a href={href(`/courses/${course.id}/`)}>{course.data.title}</a>
   </nav>
   <div class="page-header">
     <h1>{chapter.data.title}</h1>

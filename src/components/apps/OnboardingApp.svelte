@@ -1,5 +1,6 @@
 <script lang="ts">
   import { requestPersistentStorage } from '../../lib/db/persistence';
+  import {href} from '../../lib/paths';
 
   const ONBOARDED_KEY = 'lite-learner-onboarded';
 
@@ -10,7 +11,7 @@
     // Best-effort: keep IndexedDB out of the browser's eviction pool.
     await requestPersistentStorage();
     localStorage.setItem(ONBOARDED_KEY, '1');
-    location.replace('/courses/');
+    location.replace(href('/courses/'));
   }
 </script>
 
