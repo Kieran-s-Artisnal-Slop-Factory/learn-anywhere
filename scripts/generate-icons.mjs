@@ -78,13 +78,31 @@ function onEllipseRing(x, y, cx, cy, rx, ry, halfOnly) {
   return grad > 0 && Math.abs(f - 1) / grad <= STROKE;
 }
 
-function onCylinder(x, y) {
+/** True within STROKE of the segment (x0,y0)-(x1,y1). */
+function onSegment(x, y, x0, y0, x1, y1) {
+  const dx = x1 - x0;
+  const dy = y1 - y0;
+  const t = Math.max(0, Math.min(1, ((x - x0) * dx + (y - y0) * dy) / (dx * dx + dy * dy)));
+  return Math.hypot(x - (x0 + t * dx), y - (y0 + t * dy)) <= STROKE;
+}
+
+// Graduation cap, mirroring public/favicon.svg: mortarboard diamond, the
+// head band below it, and a tassel hanging off the right with a bead.
+function onCap(x, y) {
   return (
-    onEllipseRing(x, y, 16, 10, 8, 3.5, false) || // top rim
-    onEllipseRing(x, y, 16, 16, 8, 3.5, true) || // middle band
-    onEllipseRing(x, y, 16, 22, 8, 3.5, true) || // bottom
-    (Math.abs(x - 8) <= STROKE && y >= 10 && y <= 22) || // left side
-    (Math.abs(x - 24) <= STROKE && y >= 10 && y <= 22) // right side
+    // mortarboard diamond
+    onSegment(x, y, 16, 7, 28, 13) ||
+    onSegment(x, y, 28, 13, 16, 19) ||
+    onSegment(x, y, 16, 19, 4, 13) ||
+    onSegment(x, y, 4, 13, 16, 7) ||
+    // head band: two sides + bottom half-ellipse
+    (Math.abs(x - 10.5) <= STROKE && y >= 15.5 && y <= 20) ||
+    (Math.abs(x - 21.5) <= STROKE && y >= 15.5 && y <= 20) ||
+    onEllipseRing(x, y, 16, 20, 5.5, 3, true) ||
+    // tassel: from the button, over the edge, straight down, then the bead
+    onSegment(x, y, 16, 13, 26, 17) ||
+    onSegment(x, y, 26, 17, 26, 21) ||
+    Math.hypot(x - 26, y - 22.5) <= 1.5
   );
 }
 
@@ -113,16 +131,16 @@ function renderIcon(size, maskable) {
           // artwork coordinates (centered scale for the safe zone)
           const ax = 16 + (u - 16) / contentScale;
           const ay = 16 + (v - 16) / contentScale;
-          if (onCylinder(ax, ay)) fgHits++;
+          if (onCap(ax, ay)) fgHits++;
         }
       }
       const total = SS * SS;
       const alpha = bgHits / total;
       const fg = bgHits > 0 ? fgHits / bgHits : 0;
       const i = (py * size + px) * 4;
-      rgba[i] = Math.round(ORANGE[0] + (CREAM[0] - ORANGE[0]) * fg);
-      rgba[i + 1] = Math.round(ORANGE[1] + (CREAM[1] - ORANGE[1]) * fg);
-      rgba[i + 2] = Math.round(ORANGE[2] + (CREAM[2] - ORANGE[2]) * fg);
+      rgba[i] = Math.round(BLUE[0] + (WHITE[0] - BLUE[0]) * fg);
+      rgba[i + 1] = Math.round(BLUE[1] + (WHITE[1] - BLUE[1]) * fg);
+      rgba[i + 2] = Math.round(BLUE[2] + (WHITE[2] - BLUE[2]) * fg);
       rgba[i + 3] = Math.round(alpha * 255);
     }
   }

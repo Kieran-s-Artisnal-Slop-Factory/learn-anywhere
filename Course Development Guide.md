@@ -8,13 +8,13 @@ One folder per course, one sub-folder per chapter, lesson files inside:
 
 ```
 src/content/courses/
-  1.effective-learning/            ← course folder (name = slug = URL segment)
+  1.learn-anywhere-101/            ← course folder (name = slug = URL segment)
     index.md                       ← the COURSE page
-    memory-fundamentals/           ← chapter folder
+    the-basics/                    ← chapter folder
       index.md                     ← the CHAPTER page (may declare a test)
-      how-memory-works.md          ← a LESSON (may declare a quiz)
+      welcome.md                   ← a LESSON (may declare a quiz)
 src/content/glossary/
-  active-recall.md                 ← one glossary TERM per file
+  frontmatter.md                   ← one glossary TERM per file
 ```
 
 Folder/file names become ids and URLs (`/courses/<course>/<chapter>/<lesson>/`),
@@ -27,16 +27,16 @@ Parents list their children, and array order IS display order:
 
 ```yaml
 # course index.md
-title: Effective Learning
+title: Learn Anywhere 101
 chapters:
-  - memory-fundamentals      # folder names, relative to the course folder
-  - study-techniques
+  - the-basics               # folder names, relative to the course folder
+  - creating-content
 
 # chapter index.md
-title: Memory Fundamentals
+title: The Basics
 lessons:
-  - how-memory-works         # file names minus .md
-  - the-forgetting-curve
+  - welcome                  # file names minus .md
+  - lessons-quizzes-and-tests
 ```
 
 The build fails on a listed child that doesn't exist and on files no parent
