@@ -41,7 +41,7 @@ scores live.
 
 ## Authoring a deck
 
-One markdown file per deck in `src/content/flashcards/`; cards are plain-text
+**One markdown file per deck** in `src/content/flashcards/`; cards are plain-text
 front/back pairs in [[frontmatter]], and the body is the deck's description:
 
 ```yaml

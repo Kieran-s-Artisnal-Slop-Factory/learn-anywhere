@@ -65,7 +65,13 @@
       <span class="badge">recorded</span>
     {/if}
   </legend>
-  <p class="prompt">{question.prompt}</p>
+  {#if question.prompt_html}
+    <!-- Build-rendered markdown (trusted authored content, same pipeline as
+         lesson bodies — glossary links included). -->
+    <div class="prompt">{@html question.prompt_html}</div>
+  {:else}
+    <p class="prompt">{question.prompt}</p>
+  {/if}
 
   {#if question.type === 'multiple_choice'}
     <div class="options" role="radiogroup">
@@ -163,6 +169,25 @@
   .prompt {
     font-weight: 600;
     margin-bottom: var(--space-3);
+  }
+
+  /* Rendered-markdown prompts: keep injected elements compact. */
+  .prompt :global(p) {
+    margin: 0;
+  }
+
+  .prompt :global(p + p),
+  .prompt :global(pre) {
+    margin-top: var(--space-2);
+  }
+
+  .prompt :global(pre) {
+    padding: var(--space-2) var(--space-3);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    overflow-x: auto;
+    font-size: var(--font-size-sm);
+    font-weight: 400;
   }
 
   .hint {

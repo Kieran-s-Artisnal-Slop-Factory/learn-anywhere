@@ -11,9 +11,37 @@
  */
 import { createHash } from 'node:crypto';
 import { getCollection, type CollectionEntry } from 'astro:content';
+import { createMarkdownProcessor, type MarkdownProcessor } from '@astrojs/markdown-remark';
 import type { Question } from '../assessment/types';
+// @ts-expect-error — plain .mjs module (shared with astro.config.mjs, which
+// imports it before any TypeScript pipeline exists).
+import { remarkGlossary } from '../glossary/remark-glossary.mjs';
 import { resolveTrees } from './resolve';
 import type { ChapterContent, CourseContent, LessonContent } from './types';
+
+/**
+ * Question prompts are markdown too (glossary [[refs]] included), but they
+ * live in frontmatter, which Astro's content pipeline leaves as plain
+ * strings. This processor renders them at build time with the same glossary
+ * plugin as lesson bodies; the HTML rides along as `prompt_html` next to the
+ * raw prompt (which result-endpoint submissions keep sending as text).
+ */
+let promptProcessor: Promise<MarkdownProcessor> | null = null;
+
+async function renderPrompt(markdown: string): Promise<string> {
+  promptProcessor ??= createMarkdownProcessor({
+    remarkPlugins: [[remarkGlossary, { base: import.meta.env.BASE_URL }]],
+  });
+  const rendered = await (await promptProcessor).render(markdown);
+  return String(rendered.code);
+}
+
+async function withPromptHtml(questions: Question[] | undefined): Promise<Question[] | undefined> {
+  if (!questions) return undefined;
+  return Promise.all(
+    questions.map(async (q) => ({ ...q, prompt_html: await renderPrompt(q.prompt) }))
+  );
+}
 
 /** JSON.stringify with recursively sorted object keys, so hashing is stable. */
 function canonicalize(value: unknown): string {
@@ -70,11 +98,13 @@ export async function loadCourseTrees(): Promise<CourseEntryTree[]> {
   return resolveTrees(courseEntries, chapterEntries, lessonEntries);
 }
 
-export function toBundle(tree: CourseEntryTree): CourseBundle {
+export async function toBundle(tree: CourseEntryTree): Promise<CourseBundle> {
   return {
     course: courseContent(tree.course),
-    chapters: tree.chapters.map(({ chapter }) => chapterContent(chapter)),
-    lessons: tree.chapters.flatMap(({ lessons }) => lessons.map(lessonContent)),
+    chapters: await Promise.all(tree.chapters.map(({ chapter }) => chapterContent(chapter))),
+    lessons: await Promise.all(
+      tree.chapters.flatMap(({ lessons }) => lessons.map(lessonContent))
+    ),
   };
 }
 
@@ -89,7 +119,7 @@ export function courseContent(entry: CollectionEntry<'courses'>): CourseContent 
   };
 }
 
-export function chapterContent(entry: CollectionEntry<'chapters'>): ChapterContent {
+export async function chapterContent(entry: CollectionEntry<'chapters'>): Promise<ChapterContent> {
   const body = entry.body ?? '';
   return {
     slug: entry.id,
@@ -97,12 +127,12 @@ export function chapterContent(entry: CollectionEntry<'chapters'>): ChapterConte
     title: entry.data.title,
     description: body,
     lessons: entry.data.lessons.map((leaf) => `${entry.id}/${leaf}`),
-    test: entry.data.test as Question[] | undefined,
+    test: await withPromptHtml(entry.data.test as Question[] | undefined),
     result_endpoint: entry.data.result_endpoint,
   };
 }
 
-export function lessonContent(entry: CollectionEntry<'lessons'>): LessonContent {
+export async function lessonContent(entry: CollectionEntry<'lessons'>): Promise<LessonContent> {
   const body = entry.body ?? '';
   return {
     slug: entry.id,
@@ -111,7 +141,7 @@ export function lessonContent(entry: CollectionEntry<'lessons'>): LessonContent 
     description: body,
     // Derived, never authored: a declared quiz makes it an exercise.
     kind: entry.data.quiz ? 'exercise' : 'reading',
-    quiz: entry.data.quiz as Question[] | undefined,
+    quiz: await withPromptHtml(entry.data.quiz as Question[] | undefined),
     result_endpoint: entry.data.result_endpoint,
   };
 }

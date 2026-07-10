@@ -24,6 +24,8 @@ export async function getStaticPaths() {
 
 const { course, chapter, lessons, position } = Astro.props;
 const { Content } = await render(chapter);
+const chapterPayload = await chapterContent(chapter);
+const lessonPayloads = await Promise.all(lessons.map(lessonContent));
 const exerciseCount = lessons.filter((l) => l.data.quiz !== undefined).length;
 const readingCount = lessons.length - exerciseCount;
 const hasTest = chapter.data.test !== undefined;
@@ -48,8 +50,8 @@ const hasTest = chapter.data.test !== undefined;
   <ChapterApp
     client:only="svelte"
     course={courseContent(course)}
-    chapter={chapterContent(chapter)}
-    lessons={lessons.map(lessonContent)}
+    chapter={chapterPayload}
+    lessons={lessonPayloads}
   />
 </Layout>
 

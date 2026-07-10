@@ -17,9 +17,16 @@
  *    endpoint for human marking
  */
 
+/**
+ * Prompts are authored as markdown (glossary [[refs]] included). The build
+ * renders each one to HTML (bundle.ts) and attaches it as `prompt_html`;
+ * the raw `prompt` remains the plain-text source — it's what result-endpoint
+ * submissions send. Options are always plain text.
+ */
 export interface MultipleChoiceQuestion {
   type: 'multiple_choice';
   prompt: string;
+  prompt_html?: string;
   /** Authored options, rendered with a–e labels. */
   options: string[];
   /** Append an "All of the above" option after the authored ones. */
@@ -33,12 +40,14 @@ export interface MultipleChoiceQuestion {
 export interface TrueFalseQuestion {
   type: 'true_false';
   prompt: string;
+  prompt_html?: string;
   answer: boolean;
 }
 
 export interface MultiSelectQuestion {
   type: 'multi_select';
   prompt: string;
+  prompt_html?: string;
   options: string[];
   /** Indices of every correct option — the response must match the set exactly. */
   answer: number[];
@@ -47,11 +56,13 @@ export interface MultiSelectQuestion {
 export interface ShortAnswerQuestion {
   type: 'short_answer';
   prompt: string;
+  prompt_html?: string;
 }
 
 export interface LongAnswerQuestion {
   type: 'long_answer';
   prompt: string;
+  prompt_html?: string;
 }
 
 export type Question =

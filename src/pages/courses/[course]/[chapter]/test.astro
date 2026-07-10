@@ -23,6 +23,7 @@ export async function getStaticPaths() {
 
 const { course, chapter } = Astro.props;
 const questionCount = chapter.data.test?.length ?? 0;
+const chapterPayload = await chapterContent(chapter);
 ---
 
 <Layout title={`Test — ${chapter.data.title}`}>
@@ -39,7 +40,7 @@ const questionCount = chapter.data.test?.length ?? 0;
   <TestApp
     client:only="svelte"
     course={courseContent(course)}
-    chapter={chapterContent(chapter)}
+    chapter={chapterPayload}
   />
 
   <nav class="pager">

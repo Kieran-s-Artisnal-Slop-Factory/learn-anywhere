@@ -105,6 +105,23 @@ Answer indices are validated at build time (out-of-range indices, `all`
 without `all_of_the_above`, duplicate multi-select indices all fail the
 build).
 
+**Prompts are markdown.** A question's `prompt` is rendered through the same
+pipeline as lesson bodies, so inline code, emphasis, links, and glossary
+references all work:
+
+```yaml
+  - type: multiple_choice
+    prompt: What is [[frontmatter]]? See `content.config.ts` for the schema.
+    options: [An image format, A metadata block]
+    answer: 1
+```
+
+Two notes: *options* stay plain text (handy when an option needs to show
+literal markdown syntax), and result-endpoint submissions send the raw
+prompt text, not the rendered HTML. YAML quoting still applies — wrap the
+prompt in quotes when it contains `key: value` text or starts with a
+reserved character like a backtick or `#`.
+
 Grading: unanswered questions can't be submitted; each gradable question is
 right or wrong (no partial credit on multi-select); the score is
 `correct/gradable`. Short/long answers are excluded from `gradable` entirely.

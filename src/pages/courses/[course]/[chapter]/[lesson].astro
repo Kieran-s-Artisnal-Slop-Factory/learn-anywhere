@@ -53,6 +53,9 @@ const { Content } = await render(lesson);
 const isExercise = lesson.data.quiz !== undefined;
 const courseHref = href(`/courses/${course.id}/`);
 const chapterHref = href(`/courses/${chapter.id}/`);
+const coursePayload = courseContent(course);
+const chapterPayload = await chapterContent(chapter);
+const lessonPayload = await lessonContent(lesson);
 ---
 
 <Layout title={lesson.data.title}>
@@ -78,9 +81,9 @@ const chapterHref = href(`/courses/${chapter.id}/`);
     <div class="workspace">
       <LessonApp
         client:only="svelte"
-        course={courseContent(course)}
-        chapter={chapterContent(chapter)}
-        lesson={lessonContent(lesson)}
+        course={coursePayload}
+        chapter={chapterPayload}
+        lesson={lessonPayload}
       />
     </div>
   </div>

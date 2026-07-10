@@ -2,12 +2,14 @@
 title: Markdown Basics
 quiz:
   - type: multiple_choice
-    prompt: "How do you write a second-level heading? ## Like This"
+    prompt: |
+      How do you write a second-level heading?
+      ## Like This
     options:
-      - "# Heading"
-      - "## Heading"
-      - "**Heading**"
-      - "<h2>Heading</h2> only"
+      - "# Like This"
+      - "## Like This"
+      - "**Like This**"
+      - "<h2>Like This</h2> only"
     answer: 1
   - type: multiple_choice
     prompt: "What does `[label](https://example.com)` produce?"

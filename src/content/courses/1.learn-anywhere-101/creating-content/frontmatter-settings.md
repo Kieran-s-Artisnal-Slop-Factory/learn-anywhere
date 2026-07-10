@@ -2,10 +2,18 @@
 title: Frontmatter Settings
 quiz:
   - type: multiple_choice
-    prompt: What fences a frontmatter block?
+    prompt: What is [[frontmatter]]? (Notice the glossary link — prompts are markdown too.)
+    options:
+      - An image format
+      - The metadata block at the top of a file controlling the title, quizzes, etc.
+      - A CSS framework
+      - The first paragraph of a lesson
+    answer: 1
+  - type: multiple_choice
+    prompt: What fences (comes before and after) a frontmatter block?
     options:
       - Triple backticks
-      - Three dashes on their own lines
+      - Three idashes in a row, on their own lines
       - Curly braces
       - An XML tag
     answer: 1
@@ -14,7 +22,7 @@ quiz:
     options:
       - Alphabetically by filename
       - In each lesson's `order:` field
-      - In the chapter index.md's `lessons:` list
+      - In the order they appear in chapters index.md's lessons list
       - In src/content.config.ts
     answer: 2
   - type: true_false
