@@ -170,7 +170,7 @@
 
     {#if inProgress.length === 0 && recentlyCompleted.length === 0}
       <p class="muted">
-        You're enrolled but haven't started an exercise yet —
+        You're enrolled but haven't started a lesson yet —
         <a href={href('/courses/')}>jump into a course</a>.
       </p>
     {/if}
@@ -209,12 +209,7 @@
   .section-title {
     font-size: var(--font-size-lg);
     margin-bottom: var(--space-3);
-    color: var(--gb-yellow);
-  }
-
-  .section-title::before {
-    content: '## ';
-    color: var(--text-muted-color);
+    color: var(--text-color);
   }
 
   .item-list {

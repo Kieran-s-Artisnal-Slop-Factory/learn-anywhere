@@ -8,29 +8,20 @@
     type ExportEnvelope,
   } from '../../lib/db/export';
   import { requestPersistentStorage, type PersistState } from '../../lib/db/persistence';
-  import { getEditorScheme, setEditorScheme, type EditorScheme } from '../../lib/editorTheme';
   import { getPalette, setPalette, PALETTES, type Palette } from '../../lib/palette';
   import {href} from '../../lib/paths';
 
-  const THEME_KEY = 'lite-learner-theme';
-
-  const editorThemes: { value: EditorScheme; label: string }[] = [
-    { value: 'match', label: 'Match app' },
-    { value: 'light', label: 'Light' },
-    { value: 'dark', label: 'Dark' },
-  ];
+  const THEME_KEY = 'learn-anywhere-theme';
 
   let message: string | null = $state(null);
   let messageOk = $state(true);
   let busy = $state(false);
   let theme = $state('auto');
-  let editorTheme = $state<EditorScheme>('match');
   let palette = $state<Palette>('gruvbox');
   let persistState: PersistState | null = $state(null);
 
   onMount(async () => {
     theme = localStorage.getItem(THEME_KEY) ?? 'auto';
-    editorTheme = getEditorScheme();
     palette = getPalette();
     inDeveloperMode = sessionStorage.getItem(DEV_MODE_KEY) === '1';
   });
@@ -45,11 +36,6 @@
     if (value === 'auto') localStorage.removeItem(THEME_KEY);
     else localStorage.setItem(THEME_KEY, value);
     document.documentElement.style.colorScheme = value === 'auto' ? '' : value;
-  }
-
-  function setEditor(value: EditorScheme) {
-    editorTheme = value;
-    setEditorScheme(value);
   }
 
   async function persist() {
@@ -81,7 +67,7 @@
 
   // ---- developer options, gated behind typing the exact phrase once per
   // browser session (sessionStorage, so it resets across sessions)
-  const DEV_MODE_KEY = 'lite-learner-inDeveloperMode';
+  const DEV_MODE_KEY = 'learn-anywhere-inDeveloperMode';
   const DEV_PHRASE = 'I understand I can lose and corrupt my data by using these settings';
   let inDeveloperMode = $state(false);
   let showDevModal = $state(false);
@@ -101,8 +87,7 @@
       return;
     }
     await clearAllData();
-    localStorage.removeItem('lite-learner-onboarded');
-    location.href = href('/onboarding/');
+    location.href = href('/');
   }
 </script>
 
@@ -140,24 +125,6 @@
               class="btn"
               class:btn-primary={palette === opt.value}
               onclick={() => setPaletteChoice(opt.value)}
-            >
-              {opt.label}
-            </button>
-          {/each}
-        </div>
-      </div>
-      <div class="setting">
-        <p class="setting-label">Editor</p>
-        <p class="muted small">
-          Colour scheme for the SQL editor and its autocomplete popup — pin it light or dark
-          independent of the app theme.
-        </p>
-        <div class="row">
-          {#each editorThemes as opt (opt.value)}
-            <button
-              class="btn"
-              class:btn-primary={editorTheme === opt.value}
-              onclick={() => setEditor(opt.value)}
             >
               {opt.label}
             </button>

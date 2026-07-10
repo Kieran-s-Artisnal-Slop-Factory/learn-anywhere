@@ -2,28 +2,26 @@
   import { requestPersistentStorage } from '../../lib/db/persistence';
   import {href} from '../../lib/paths';
 
-  const ONBOARDED_KEY = 'lite-learner-onboarded';
-
   let busy = $state(false);
 
   async function finish() {
     busy = true;
     // Best-effort: keep IndexedDB out of the browser's eviction pool.
     await requestPersistentStorage();
-    localStorage.setItem(ONBOARDED_KEY, '1');
     location.replace(href('/courses/'));
   }
 </script>
 
 <div class="onboarding">
-  <h1>Welcome to lite-learner</h1>
+  <h1>Welcome to Learn Anywhere</h1>
   <p class="muted">
-    Learn SQL by writing it. Every exercise runs against a real SQLite database in your
-    browser — write a statement, run it, and watch the database change.
+    Courses you can take entirely in your browser: read the lessons, answer the quizzes as you
+    go, and finish each chapter with a test. Your scores are tracked so you can see how you're
+    doing.
   </p>
   <ul class="muted points">
     <li>No account and no server: enroll in a course and it's copied into this browser.</li>
-    <li>Your progress and solutions are saved locally and survive reloads.</li>
+    <li>Your progress, answers, and scores are saved locally and survive reloads.</li>
     <li>After the first visit everything works fully offline.</li>
   </ul>
   <div>

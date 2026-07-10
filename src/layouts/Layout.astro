@@ -11,49 +11,39 @@ interface Props {
 const { title } = Astro.props;
 const currentPath = Astro.url.pathname;
 const swPath = href('/sw.js');
-const onboardingPath = href('/onboarding/');
 ---
 
 <!doctype html>
-<html lang="en" data-sw-path={swPath} data-onboarding-path={onboardingPath}>
+<html lang="en" data-sw-path={swPath} data-palette="boring">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="color-scheme" content="light dark" />
-    <meta name="description" content="lite-learner — local-first app" />
+    <meta name="description" content="Learn Anywhere — local-first courses with quizzes, tests, and flashcards" />
     <link rel="icon" href={href('/favicon.svg')} type="image/svg+xml" />
     <link rel="manifest" href={href('/manifest.webmanifest')} />
     <link rel="apple-touch-icon" href={href('/icons/icon-192.png')} />
     <meta name="theme-color" media="(prefers-color-scheme: light)" content="#fbf1c7" />
     <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#282828" />
-    <title>{title} · lite-learner</title>
+    <title>{title} · Learn Anywhere</title>
     <script is:inline>
       // Apply the manual theme override before first paint to avoid a flash.
       // 'light'/'dark' pin the scheme; anything else follows the OS setting.
       // data-theme lets CSS that can't use light-dark() (e.g. Shiki's dual
       // highlight variables) follow the same pin.
       try {
-        const theme = localStorage.getItem('lite-learner-theme');
+        const theme = localStorage.getItem('learn-anywhere-theme');
         if (theme === 'light' || theme === 'dark') {
           document.documentElement.style.colorScheme = theme;
           document.documentElement.dataset.theme = theme;
         }
-        const palette = localStorage.getItem('lite-learner-palette');
-        if (palette === 'boring' || palette === 'forrest') {
+        // 'boring' ships as the static default; only a different stored
+        // choice rewrites it. Gruvbox is theme.css's attribute-less base.
+        const palette = localStorage.getItem('learn-anywhere-palette');
+        if (palette === 'gruvbox') {
+          delete document.documentElement.dataset.palette;
+        } else if (palette === 'forrest') {
           document.documentElement.dataset.palette = palette;
-        }
-      } catch {}
-    </script>
-    <script is:inline define:vars={{ onboardingPath }}>
-      // First-run gate: send new users through onboarding once (MPA — runs on
-      // every page). Storage failures fall through to the app rather than
-      // trapping the user in a redirect loop.
-      try {
-        if (
-          (!location.pathname.endsWith('/onboarding/') && !location.pathname.endsWith('/onboarding')) &&
-          !localStorage.getItem('lite-learner-onboarded')
-        ) {
-          location.replace(onboardingPath);
         }
       } catch {}
     </script>
@@ -63,6 +53,130 @@ const onboardingPath = href('/onboarding/');
     <main class="page">
       <slot />
     </main>
+    <script is:inline>
+      // Glossary popovers. The remark plugin bakes each [[term]] reference
+      // into an <a class="glossary-link"> carrying data-term/data-short, so
+      // this is pure display logic: hover/focus previews the definition,
+      // click toggles it (so touch users get the popup instead of a
+      // navigation), and the popup's "Read more" goes to the landing page.
+      // Middle-click / open-in-new-tab / no-JS still navigate normally.
+      //
+      // Dismissal is deliberately forgiving: leaving the link starts a grace
+      // timer (cancelled when the pointer reaches the popover, so "Read more"
+      // is clickable), and scrolling never dismisses — wheel scrolling moves
+      // elements under a stationary pointer, which fires mouseover events
+      // that must not count as "moved away".
+      (() => {
+        let popover = null;
+        let anchor = null;
+        let hideTimer = null;
+        let lastScroll = 0;
+
+        function cancelHide() {
+          clearTimeout(hideTimer);
+          hideTimer = null;
+        }
+
+        function scheduleHide() {
+          cancelHide();
+          hideTimer = setTimeout(hide, 350);
+        }
+
+        function hide() {
+          cancelHide();
+          popover?.remove();
+          popover = null;
+          anchor = null;
+        }
+
+        function show(link) {
+          if (anchor === link) return;
+          hide();
+          anchor = link;
+          popover = document.createElement('div');
+          popover.className = 'glossary-popover';
+          const term = document.createElement('p');
+          term.className = 'gp-term';
+          term.textContent = link.dataset.term || link.textContent;
+          const short = document.createElement('p');
+          short.className = 'gp-short';
+          short.textContent = link.dataset.short || '';
+          const more = document.createElement('a');
+          more.className = 'gp-more';
+          more.href = link.href;
+          more.textContent = 'Read more →';
+          popover.append(term, short, more);
+          document.body.appendChild(popover);
+
+          // Document-flow coordinates so the popover scrolls with the page.
+          // Flip above the link when the space below the viewport fold is
+          // too tight — that's the case where users previously had to scroll
+          // (and lost the popover).
+          const rect = link.getBoundingClientRect();
+          const width = Math.min(320, window.innerWidth - 16);
+          popover.style.maxWidth = width + 'px';
+          const pw = popover.offsetWidth;
+          const ph = popover.offsetHeight;
+          let left = rect.left + window.scrollX;
+          left = Math.min(left, window.scrollX + window.innerWidth - pw - 8);
+          popover.style.left = Math.max(window.scrollX + 8, left) + 'px';
+          const spaceBelow = window.innerHeight - rect.bottom;
+          const top =
+            spaceBelow < ph + 12 && rect.top > ph + 12
+              ? rect.top + window.scrollY - ph - 6
+              : rect.bottom + window.scrollY + 6;
+          popover.style.top = top + 'px';
+        }
+
+        // Scrolling must never dismiss: cancel pending hides and ignore the
+        // pointer-under-scroll mouseover noise for a moment afterwards.
+        window.addEventListener(
+          'scroll',
+          () => {
+            lastScroll = Date.now();
+            cancelHide();
+          },
+          { capture: true, passive: true }
+        );
+
+        document.addEventListener('mouseover', (e) => {
+          const link = e.target.closest?.('.glossary-link');
+          if (link) {
+            cancelHide();
+            show(link);
+            return;
+          }
+          if (e.target.closest?.('.glossary-popover')) {
+            cancelHide();
+            return;
+          }
+          if (popover && Date.now() - lastScroll > 600) scheduleHide();
+        });
+        document.addEventListener('focusin', (e) => {
+          const link = e.target.closest?.('.glossary-link');
+          if (link) {
+            cancelHide();
+            show(link);
+          } else if (!e.target.closest?.('.glossary-popover')) {
+            hide();
+          }
+        });
+        document.addEventListener('click', (e) => {
+          if (e.target.closest?.('.glossary-popover')) return; // "Read more" navigates
+          const link = e.target.closest?.('.glossary-link');
+          if (link && !e.ctrlKey && !e.metaKey && e.button === 0) {
+            e.preventDefault();
+            if (anchor === link) hide();
+            else show(link);
+            return;
+          }
+          if (popover) hide();
+        });
+        document.addEventListener('keydown', (e) => {
+          if (e.key === 'Escape') hide();
+        });
+      })();
+    </script>
     {
       import.meta.env.PROD ? (
         <script is:inline>

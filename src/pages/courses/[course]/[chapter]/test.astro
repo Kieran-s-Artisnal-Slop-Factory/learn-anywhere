@@ -1,0 +1,58 @@
+---
+// Chapter test — a full-page assessment generated only for chapters whose
+// index.md declares a `test`. Static segments win over the [lesson] dynamic
+// route, which is why `test` is a reserved lesson name (enforced by the
+// chapters schema). Submitting gates chapter completion; see lib/progress.ts.
+import Layout from '../../../../layouts/Layout.astro';
+import TestApp from '../../../../components/assessment/TestApp.svelte';
+import { chapterContent, courseContent, loadCourseTrees } from '../../../../lib/content/bundle';
+import { href } from '../../../../lib/paths';
+
+export async function getStaticPaths() {
+  const trees = await loadCourseTrees();
+  return trees.flatMap((tree) =>
+    tree.chapters
+      .filter(({ chapter }) => chapter.data.test !== undefined)
+      .map(({ chapter }, ) => ({
+        params: { course: tree.course.id, chapter: chapter.id.split('/').pop()! },
+        props: { course: tree.course, chapter },
+      }))
+  );
+}
+
+const { course, chapter } = Astro.props;
+const questionCount = chapter.data.test?.length ?? 0;
+---
+
+<Layout title={`Test — ${chapter.data.title}`}>
+  <nav class="breadcrumbs">
+    <a href={href('/courses/')}>Courses</a> /
+    <a href={href(`/courses/${course.id}/`)}>{course.data.title}</a> /
+    <a href={href(`/courses/${chapter.id}/`)}>{chapter.data.title}</a>
+  </nav>
+  <div class="page-header">
+    <h1>Chapter test: {chapter.data.title}</h1>
+    <span class="muted">{questionCount} question{questionCount === 1 ? '' : 's'}</span>
+  </div>
+
+  <TestApp
+    client:only="svelte"
+    course={courseContent(course)}
+    chapter={chapterContent(chapter)}
+  />
+
+  <nav class="pager">
+    <a class="btn" href={href(`/courses/${chapter.id}/`)}>← Back to {chapter.data.title}</a>
+    <a class="btn" href={href(`/courses/${course.id}/`)}>Back to course →</a>
+  </nav>
+</Layout>
+
+<style>
+  .pager {
+    display: flex;
+    justify-content: space-between;
+    gap: var(--space-3);
+    margin-top: var(--space-5);
+    flex-wrap: wrap;
+  }
+</style>

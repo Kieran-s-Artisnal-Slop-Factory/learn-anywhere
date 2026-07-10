@@ -1,0 +1,36 @@
+---
+// One deck's practice page: rendered description + the practice island.
+import { getCollection, render } from 'astro:content';
+import Layout from '../../layouts/Layout.astro';
+import FlashcardApp from '../../components/flashcards/FlashcardApp.svelte';
+import { href } from '../../lib/paths';
+
+export async function getStaticPaths() {
+  const decks = await getCollection('flashcards');
+  return decks.map((deck) => ({ params: { deck: deck.id }, props: { deck } }));
+}
+
+const { deck } = Astro.props;
+const { Content } = await render(deck);
+---
+
+<Layout title={deck.data.title}>
+  <nav class="breadcrumbs">
+    <a href={href('/flashcards/')}>Flashcards</a> / {deck.data.title}
+  </nav>
+  <div class="page-header">
+    <h1>{deck.data.title}</h1>
+    <span class="muted">{deck.data.cards.length} cards</span>
+  </div>
+  <div class="prose description">
+    <Content />
+  </div>
+
+  <FlashcardApp client:only="svelte" cards={deck.data.cards} />
+</Layout>
+
+<style>
+  .description {
+    margin-bottom: var(--space-5);
+  }
+</style>

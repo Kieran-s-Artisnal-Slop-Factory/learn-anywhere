@@ -1,11 +1,13 @@
 <script lang="ts">
   /**
    * Interactive half of a chapter page: the lesson list with live progress
-   * plus a continue quick-access. Also refreshes the cached rows this page
-   * shows (content-hash flow) so a deep link works even before the visitor
-   * saw the course page.
+   * plus a continue quick-access, ending with the chapter test (when the
+   * chapter has one). Also refreshes the cached rows this page shows
+   * (content-hash flow) so a deep link works even before the visitor saw the
+   * course page.
    */
   import { onMount } from 'svelte';
+  import { percent } from '../../lib/assessment/grade';
   import { get } from '../../lib/db/repo';
   import type { Chapters, Lessons } from '../../lib/db/types';
   import type { ChapterContent, CourseContent, LessonContent } from '../../lib/content/types';
@@ -29,9 +31,15 @@
 
   const href = (slug: string) => linkCorrector(`/courses/${slug}/`);
 
+  const hasTest = (chapter.test?.length ?? 0) > 0;
   const done = $derived([...lessonRows.values()].filter((l) => l.completed).length);
+  const testPct = $derived(chapterRow?.test_score ? percent(chapterRow.test_score) : null);
   const continueLesson = $derived(
     chapterRow?.completed ? null : (lessons.find((l) => !lessonRows.get(l.slug)?.completed) ?? null)
+  );
+  // Every lesson done but the test still open → point "continue" at the test.
+  const testIsNext = $derived(
+    !chapterRow?.completed && !continueLesson && hasTest && !chapterRow?.test_completed
   );
 
   onMount(async () => {
@@ -55,7 +63,9 @@
   <div class="stack">
     {#if chapterRow?.completed}
       <p class="banner banner-success">
-        ✓ Chapter completed {new Date(chapterRow.completed).toLocaleDateString()}
+        ✓ Chapter completed {new Date(chapterRow.completed).toLocaleDateString()}{testPct !== null
+          ? ` · test score ${chapterRow.test_score?.correct}/${chapterRow.test_score?.gradable} (${testPct}%)`
+          : ''}
       </p>
     {:else if continueLesson}
       <div class="quick-access banner banner-warning">
@@ -64,9 +74,14 @@
           {done > 0 ? 'Continue' : 'Start'}: {continueLesson.title} →
         </a>
       </div>
+    {:else if testIsNext}
+      <div class="quick-access banner banner-warning">
+        <span class="muted">All lessons done — the chapter test is what's left.</span>
+        <a class="btn btn-primary" href={href(`${chapter.slug}/test`)}>Take the chapter test →</a>
+      </div>
     {/if}
 
-    <Card title="lessons">
+    <Card title="Lessons">
       <ol class="lesson-list">
         {#each lessons as lesson (lesson.slug)}
           {@const row = lessonRows.get(lesson.slug)}
@@ -83,6 +98,15 @@
           </li>
         {/each}
       </ol>
+      {#if hasTest}
+        <div class="test-row">
+          <a href={href(`${chapter.slug}/test`)}>Chapter test</a>
+          <span class="badge">test</span>
+          {#if chapterRow?.test_completed}
+            <span class="badge badge-done">✓ {testPct === null ? 'taken' : `${testPct}%`}</span>
+          {/if}
+        </div>
+      {/if}
     </Card>
   </div>
 {/if}
@@ -109,7 +133,15 @@
     display: list-item;
   }
 
-  .lesson-list .badge {
+  .lesson-list .badge,
+  .test-row .badge {
     margin-left: var(--space-2);
+  }
+
+  .test-row {
+    margin-top: var(--space-3);
+    padding-top: var(--space-3);
+    border-top: 1px dashed var(--border-color);
+    padding-left: var(--space-5);
   }
 </style>

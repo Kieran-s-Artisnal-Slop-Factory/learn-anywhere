@@ -1,0 +1,40 @@
+---
+// A glossary term's landing page — the "read more" target of the popup
+// links. The short description leads, the markdown body is the full article.
+import { getCollection, render } from 'astro:content';
+import Layout from '../../layouts/Layout.astro';
+import { href } from '../../lib/paths';
+
+export async function getStaticPaths() {
+  const entries = await getCollection('glossary');
+  return entries.map((entry) => ({ params: { term: entry.id }, props: { entry } }));
+}
+
+const { entry } = Astro.props;
+const { Content } = await render(entry);
+---
+
+<Layout title={entry.data.term}>
+  <nav class="breadcrumbs">
+    <a href={href('/glossary/')}>Glossary</a> / {entry.data.term}
+  </nav>
+  <div class="page-header">
+    <h1>{entry.data.term}</h1>
+  </div>
+  <p class="short muted">{entry.data.short}</p>
+  <div class="prose">
+    <Content />
+  </div>
+</Layout>
+
+<style>
+  .short {
+    font-size: var(--font-size-lg);
+    max-width: 65ch;
+    margin-bottom: var(--space-5);
+  }
+
+  .prose {
+    max-width: 70ch;
+  }
+</style>

@@ -5,7 +5,7 @@
  *
  *  - no row       -> create it from the embedded content
  *  - hash differs -> overwrite the cached CONTENT fields + hash, preserving
- *                    PROGRESS (started/completed/user_solution/current_chapter)
+ *                    PROGRESS (started/completed/responses/scores/…)
  *  - hash matches -> use the cache as-is
  *
  * Rows are keyed by content slug (id = slug), which is what makes the lookup
@@ -46,12 +46,20 @@ export async function syncChapter(content: ChapterContent): Promise<Chapters> {
     return existing;
   }
   return put<Chapters>('chapters', {
-    ...(existing ?? { ...newContentRow(content.slug), started: null, completed: null }),
+    ...(existing ?? {
+      ...newContentRow(content.slug),
+      test_responses: null,
+      test_score: null,
+      test_completed: null,
+      started: null,
+      completed: null,
+    }),
     deleted_at: null,
     content_hash: content.content_hash,
     title: content.title,
     description: content.description,
     lessons: content.lessons,
+    test: content.test,
   } as Chapters);
 }
 
@@ -61,14 +69,19 @@ export async function syncLesson(content: LessonContent): Promise<Lessons> {
     return existing;
   }
   return put<Lessons>('lessons', {
-    ...(existing ?? { ...newContentRow(content.slug), user_solution: null, started: null, completed: null }),
+    ...(existing ?? {
+      ...newContentRow(content.slug),
+      quiz_responses: null,
+      quiz_score: null,
+      started: null,
+      completed: null,
+    }),
     deleted_at: null,
     content_hash: content.content_hash,
     title: content.title,
     description: content.description,
     kind: content.kind,
-    initial_sql: content.initial_sql,
-    desired_state: content.desired_state,
+    quiz: content.quiz,
   } as Lessons);
 }
 

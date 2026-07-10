@@ -11,6 +11,7 @@
  */
 import { createHash } from 'node:crypto';
 import { getCollection, type CollectionEntry } from 'astro:content';
+import type { Question } from '../assessment/types';
 import { resolveTrees } from './resolve';
 import type { ChapterContent, CourseContent, LessonContent } from './types';
 
@@ -96,6 +97,7 @@ export function chapterContent(entry: CollectionEntry<'chapters'>): ChapterConte
     title: entry.data.title,
     description: body,
     lessons: entry.data.lessons.map((leaf) => `${entry.id}/${leaf}`),
+    test: entry.data.test as Question[] | undefined,
   };
 }
 
@@ -106,9 +108,8 @@ export function lessonContent(entry: CollectionEntry<'lessons'>): LessonContent 
     content_hash: contentHash(entry.data, body),
     title: entry.data.title,
     description: body,
-    // Derived, never authored: a declared solution makes it an exercise.
-    kind: entry.data.desired_state ? 'exercise' : 'reading',
-    initial_sql: entry.data.initial_sql,
-    desired_state: entry.data.desired_state,
+    // Derived, never authored: a declared quiz makes it an exercise.
+    kind: entry.data.quiz ? 'exercise' : 'reading',
+    quiz: entry.data.quiz as Question[] | undefined,
   };
 }

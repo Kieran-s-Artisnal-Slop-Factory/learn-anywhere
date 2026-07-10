@@ -1,5 +1,5 @@
-/*
- * lite-learner theme — all configurable design tokens live here.
+﻿/*
+ * learn-anywhere theme â€” all configurable design tokens live here.
  *
  * Two layers:
  *  1. A PALETTE of raw colour slots (--pal-*), each a light-dark() pair. Three
@@ -7,7 +7,7 @@
  *     <html> (default/absent = gruvbox).
  *  2. SEMANTIC tokens that map roles (surfaces, text, accents, syntax) onto the
  *     palette slots. These reference --pal-* only, so adding a palette means
- *     filling in one more block of slots — nothing else changes.
+ *     filling in one more block of slots â€” nothing else changes.
  *
  * color-scheme: light dark makes the browser resolve light-dark() per the
  * user's (or pinned) preference.
@@ -15,23 +15,23 @@
 :root {
   color-scheme: light dark;
 
-  /* ── Brand ───────────────────────────────────────────────────────── */
+  /* â”€â”€ Brand â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
   --color-primary: var(--pal-accent);
   --color-primary-strong: var(--pal-accent-strong);
   --color-primary-soft: color-mix(in srgb, var(--pal-accent) 14%, var(--pal-bg0));
   --color-on-primary: var(--pal-on-accent);
 
-  /* ── Surfaces ────────────────────────────────────────────────────── */
+  /* â”€â”€ Surfaces â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
   --bg-color: var(--pal-bg0);
   --surface-color: var(--pal-bg0-soft);
   --surface-raised-color: var(--pal-bg1);
   --border-color: var(--pal-bg2);
 
-  /* ── Text ────────────────────────────────────────────────────────── */
+  /* â”€â”€ Text â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
   --text-color: var(--pal-fg);
   --text-muted-color: var(--pal-fg-muted);
 
-  /* ── Feedback ────────────────────────────────────────────────────── */
+  /* â”€â”€ Feedback â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
   --color-success: var(--pal-green);
   --color-success-soft: color-mix(in srgb, var(--pal-green) 14%, var(--pal-bg0));
   --color-danger: var(--pal-red);
@@ -40,7 +40,7 @@
   --color-warning-soft: color-mix(in srgb, var(--pal-yellow) 14%, var(--pal-bg0));
   --color-info: var(--pal-blue);
 
-  /* ── Editor / syntax (CodeMirror + rendered code blocks) ────────── */
+  /* â”€â”€ Editor / syntax (CodeMirror + rendered code blocks) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
   --editor-bg: var(--pal-bg0-soft);
   --editor-gutter-bg: var(--pal-bg1);
   --editor-gutter-fg: var(--pal-gray);
@@ -63,8 +63,11 @@
   --editor-tooltip-selected-fg: var(--color-on-primary);
   --editor-match-fg: var(--color-primary-strong);
 
-  /* ── Typography ──────────────────────────────────────────────────── */
-  --font-body: ui-monospace, "Cascadia Code", Consolas, "SF Mono", monospace;
+  /* â”€â”€ Typography â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+  /* Sans-serif body for a clean, professional read; mono only for code. */
+  --font-body: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue",
+    Arial, sans-serif;
+  --font-mono: ui-monospace, "Cascadia Code", Consolas, "SF Mono", monospace;
   --font-size-sm: 0.85rem;
   --font-size-base: 1rem;
   --font-size-lg: 1.2rem;
@@ -72,7 +75,7 @@
   --font-size-2xl: 2rem;
   --line-height: 1.55;
 
-  /* ── Spacing ─────────────────────────────────────────────────────── */
+  /* â”€â”€ Spacing â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
   --space-1: 0.25rem;
   --space-2: 0.5rem;
   --space-3: 0.75rem;
@@ -80,23 +83,23 @@
   --space-5: 1.5rem;
   --space-6: 2.5rem;
 
-  /* ── Shape ───────────────────────────────────────────────────────── */
-  --radius-sm: 3px;
-  --radius-md: 5px;
-  --radius-lg: 7px;
+  /* â”€â”€ Shape â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 10px;
   --radius-full: 999px;
 
-  /* ── Elevation ───────────────────────────────────────────────────── */
+  /* â”€â”€ Elevation â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
   --shadow-1: 0 1px 3px var(--pal-shadow-1);
   --shadow-2: 0 4px 16px var(--pal-shadow-2);
 
-  /* ── Layout ──────────────────────────────────────────────────────── */
+  /* â”€â”€ Layout â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
   --page-max-width: 70rem;
   --navbar-height: 3.5rem;
 }
 
-/* ── Palette: gruvbox (default) ─────────────────────────────────────
- * https://github.com/morhetz/gruvbox — faded accents for light, bright
+/* â”€â”€ Palette: gruvbox (default) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+ * https://github.com/morhetz/gruvbox â€” faded accents for light, bright
  * for dark. Applied when data-palette is absent or "gruvbox".
  */
 :root {
@@ -125,8 +128,8 @@
   --pal-shadow-2: light-dark(rgb(60 56 54 / 0.18), rgb(0 0 0 / 0.55));
 }
 
-/* ── Palette: boring ────────────────────────────────────────────────
- * Clean neutral greys — white in light mode, near-black in dark — with a
+/* â”€â”€ Palette: boring â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+ * Clean neutral greys â€” white in light mode, near-black in dark â€” with a
  * blue brand accent. Syntax keeps distinct hues for legibility.
  */
 :root[data-palette='boring'] {
@@ -155,7 +158,7 @@
   --pal-shadow-2: light-dark(rgb(20 30 60 / 0.16), rgb(0 0 0 / 0.6));
 }
 
-/* ── Palette: forrest ───────────────────────────────────────────────
+/* â”€â”€ Palette: forrest â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
  * Light: white with green accents. Dark: deep forest green with a warm
  * brown brand accent.
  */

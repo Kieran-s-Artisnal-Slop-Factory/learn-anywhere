@@ -1,21 +1,22 @@
 /**
  * Build-time manifest of every page the service worker should precache,
  * as base-relative paths (the SW resolves them against its scope). Course,
- * chapter, and exercise routes are generated from the content collections, so
- * new content is automatically offline-capable — no hardcoded route list to
- * keep in sync.
+ * chapter, lesson, test, and glossary routes are generated from the content
+ * collections, so new content is automatically offline-capable — no
+ * hardcoded route list to keep in sync.
  */
 import type { APIRoute } from 'astro';
+import { getCollection } from 'astro:content';
 import { loadCourseTrees } from '../lib/content/bundle';
 
 export const GET: APIRoute = async () => {
   const paths = [
     '',
     'courses/',
-    'playground/',
+    'flashcards/',
+    'glossary/',
     'settings/',
     'onboarding/',
-    'spike/',
     'favicon.svg',
     'manifest.webmanifest',
     'icons/icon-192.png',
@@ -28,10 +29,19 @@ export const GET: APIRoute = async () => {
     for (const { chapter, lessons } of tree.chapters) {
       // Ids are path-scoped, so they double as the route path.
       paths.push(`courses/${chapter.id}/`);
+      if (chapter.data.test !== undefined) {
+        paths.push(`courses/${chapter.id}/test/`);
+      }
       for (const lesson of lessons) {
         paths.push(`courses/${lesson.id}/`);
       }
     }
+  }
+  for (const entry of await getCollection('glossary')) {
+    paths.push(`glossary/${entry.id}/`);
+  }
+  for (const deck of await getCollection('flashcards')) {
+    paths.push(`flashcards/${deck.id}/`);
   }
   return new Response(JSON.stringify(paths), {
     headers: { 'Content-Type': 'application/json' },

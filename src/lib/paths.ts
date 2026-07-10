@@ -1,6 +1,6 @@
-/**
+﻿/**
  * Base-path helper for hosting under a sub-path (e.g. GitHub Pages at
- * `/lite-learner/`). Astro's `--base` flag sets `import.meta.env.BASE_URL` to the
+ * `/learn-anywhere/`). Astro's `--base` flag sets `import.meta.env.BASE_URL` to the
  * base with a trailing slash ('/' when served at the root, e.g. by the Go
  * backend). Every app-absolute link/navigation must go through `href()` so it
  * resolves correctly regardless of where the app is mounted.

@@ -2,16 +2,17 @@
  * Entity types + object-store map.
  *
  * Two kinds of data share each row:
- *  - cached CONTENT (title, description, …) copied from the static content
- *    collections on enrollment and refreshed via `content_hash`
- *  - per-visitor PROGRESS (started, completed, user_solution, …) that lives
- *    only in IndexedDB
+ *  - cached CONTENT (title, description, quiz/test questions, …) copied from
+ *    the static content collections on enrollment and refreshed via
+ *    `content_hash`
+ *  - per-visitor PROGRESS (started, completed, responses, scores, …) that
+ *    lives only in IndexedDB
  *
  * Content-backed rows are keyed by the content slug (`id` = slug) — the
  * path-scoped id (`course/chapter/lesson`), stable across builds — that is
  * what lets the content-hash check find the right row to refresh.
  */
-import type { DesiredState } from '../sql/comparator';
+import type { Question, QuestionResponse, Score } from '../assessment/types';
 import type { LessonKind } from '../content/types';
 
 /**
@@ -43,21 +44,25 @@ export interface Courses extends SyncFields, CachedContent {
 
 export interface Chapters extends SyncFields, CachedContent {
   lessons: string[]; // ordered lesson slugs — array order is lesson order
+  test?: Question[]; // present ⇒ the chapter ends with a full-page test
   // progress
+  test_responses: QuestionResponse[] | null; // last submission's answers
+  test_score: Score | null; // last submission's score
+  test_completed: string | null; // first submission timestamp — gates chapter completion
   started: string | null; // UTC ISO 8601
   completed: string | null; // UTC ISO 8601
 }
 
 /**
- * A lesson is an exercise (has desired_state → completed by a passing check)
- * or a reading page (completed via "Mark as read").
+ * A lesson is an exercise (has a quiz → completed by submitting it) or a
+ * reading page (completed via "Mark as read").
  */
 export interface Lessons extends SyncFields, CachedContent {
   kind: LessonKind;
-  initial_sql?: string;
-  desired_state?: DesiredState;
+  quiz?: Question[];
   // progress
-  user_solution: string | null; // last editor buffer; restored but never auto-run
+  quiz_responses: QuestionResponse[] | null; // last submission's answers
+  quiz_score: Score | null; // last submission's score
   started: string | null; // UTC ISO 8601
   completed: string | null; // UTC ISO 8601
 }

@@ -1,0 +1,59 @@
+---
+// Glossary index — every term with its short description, alphabetical.
+import { getCollection } from 'astro:content';
+import Layout from '../../layouts/Layout.astro';
+import { href } from '../../lib/paths';
+
+const entries = (await getCollection('glossary')).sort((a, b) =>
+  a.data.term.localeCompare(b.data.term)
+);
+---
+
+<Layout title="Glossary">
+  <div class="page-header">
+    <h1>Glossary</h1>
+    <span class="muted">{entries.length} term{entries.length === 1 ? '' : 's'}</span>
+  </div>
+
+  {
+    entries.length === 0 ? (
+      <p class="muted">No terms have been defined yet.</p>
+    ) : (
+      <dl class="terms">
+        {entries.map((entry) => (
+          <div class="term">
+            <dt>
+              <a href={href(`/glossary/${entry.id}/`)}>{entry.data.term}</a>
+            </dt>
+            <dd class="muted">{entry.data.short}</dd>
+          </div>
+        ))}
+      </dl>
+    )
+  }
+</Layout>
+
+<style>
+  .terms {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+    margin: 0;
+    max-width: 70ch;
+  }
+
+  .term {
+    padding: var(--space-3) var(--space-4);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    background: var(--surface-color);
+  }
+
+  dt {
+    font-weight: 700;
+  }
+
+  dd {
+    margin: var(--space-1) 0 0;
+  }
+</style>

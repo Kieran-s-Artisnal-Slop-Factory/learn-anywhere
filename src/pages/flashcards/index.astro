@@ -1,0 +1,46 @@
+---
+// Flashcard deck listing — every authored deck with its card count and the
+// first paragraph of its description.
+import { getCollection } from 'astro:content';
+import Layout from '../../layouts/Layout.astro';
+import Card from '../../components/Card.svelte';
+import { href } from '../../lib/paths';
+import { stripGlossaryRefs } from '../../lib/glossary/strip';
+
+const decks = (await getCollection('flashcards')).sort((a, b) =>
+  a.data.title.localeCompare(b.data.title)
+);
+---
+
+<Layout title="Flashcards">
+  <div class="page-header">
+    <h1>Flashcards</h1>
+    <span class="muted">{decks.length} deck{decks.length === 1 ? '' : 's'}</span>
+  </div>
+
+  {
+    decks.length === 0 ? (
+      <p class="muted">No decks have been authored yet.</p>
+    ) : (
+      <div class="stack">
+        {decks.map((deck) => (
+          <Card title={deck.data.title} titleHref={href(`/flashcards/${deck.id}/`)}>
+            <p class="muted blurb">
+              {stripGlossaryRefs((deck.body ?? '').trim().split(/\n\s*\n/)[0] ?? '')}
+            </p>
+            <a class="btn btn-primary" href={href(`/flashcards/${deck.id}/`)}>
+              Practice ({deck.data.cards.length} cards)
+            </a>
+          </Card>
+        ))}
+      </div>
+    )
+  }
+</Layout>
+
+<style>
+  .blurb {
+    margin-bottom: var(--space-4);
+    max-width: 65ch;
+  }
+</style>

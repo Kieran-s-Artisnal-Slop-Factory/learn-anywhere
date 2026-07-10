@@ -1,12 +1,10 @@
 {
-  "name": "lite-learner",
-  "short_name": "lite-learner",
-  "description": "Learn SQLite by writing it — interactive in-browser exercises against a real SQLite database. No account, works fully offline.",
-  "id": "./",
-  "start_url": "./",
-  "scope": "./",
+  "name": "Learn Anywhere",
+  "short_name": "Learn Anywhere",
+  "description": "Take courses anywhere — lessons, quizzes, and chapter tests that run entirely in your browser. No account, works fully offline.",
+  "start_url": ".",
+  "scope": ".",
   "display": "standalone",
-  "orientation": "any",
   "background_color": "#282828",
   "theme_color": "#282828",
   "icons": [

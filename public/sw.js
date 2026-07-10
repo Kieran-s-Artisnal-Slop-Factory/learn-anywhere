@@ -1,5 +1,5 @@
 /*
- * lite-learner service worker — full offline support.
+ * learn-anywhere service worker — full offline support.
  *
  * Strategy:
  *  - Install: precache every page, then crawl the cached HTML/JS/CSS for
@@ -11,7 +11,7 @@
  *  - Assets: stale-while-revalidate — served from cache instantly, refreshed
  *    from the network in the background whenever it is reachable.
  */
-const CACHE_NAME = 'lite-learner-cache-v1';
+const CACHE_NAME = 'learn-anywhere-cache-v1';
 
 // The worker is served from `${base}/sw.js`, so its registration scope IS the
 // configured Astro base ('/' on root deploys, '/repo/' on subpath deploys
@@ -22,7 +22,7 @@ const ASSET_PREFIX = BASE + '_astro/';
 // Fallback when the build-time manifest can't be fetched. precache.json is
 // generated from the content collections and includes every course, chapter,
 // and exercise page.
-const PRECACHE_FALLBACK = ['', 'courses/', 'settings/', 'onboarding/', 'spike/', 'favicon.svg'];
+const PRECACHE_FALLBACK = ['', 'courses/', 'glossary/', 'settings/', 'onboarding/', 'favicon.svg'];
 
 async function precacheList() {
   try {

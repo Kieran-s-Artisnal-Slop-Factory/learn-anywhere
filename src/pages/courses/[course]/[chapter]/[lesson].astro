@@ -1,9 +1,8 @@
 ---
 // Lesson page — statically rendered content beside the interactive island
-// (editor + engine for exercises and explorable readings, "Mark as read" for
-// prose lessons), with prev/next spanning the whole course. URL params are
-// the leaf segments of the path-scoped ids, so URLs stay
-// /courses/<course>/<chapter>/<lesson>/.
+// (the quiz for exercises, "Mark as read" for readings), with prev/next
+// spanning the whole course. URL params are the leaf segments of the
+// path-scoped ids, so URLs stay /courses/<course>/<chapter>/<lesson>/.
 import { render } from 'astro:content';
 import Layout from '../../../../layouts/Layout.astro';
 import LessonApp from '../../../../components/exercise/LessonApp.svelte';
@@ -13,7 +12,7 @@ import {
   lessonContent,
   loadCourseTrees,
 } from '../../../../lib/content/bundle';
-import {href} from '../../../../lib/paths';
+import { href } from '../../../../lib/paths';
 
 export async function getStaticPaths() {
   const trees = await loadCourseTrees();
@@ -35,6 +34,10 @@ export async function getStaticPaths() {
         lesson,
         prev: flat[i - 1] ?? null,
         next: flat[i + 1] ?? null,
+        // The last lesson of a chapter with a test points forward to it.
+        chapterTestNext:
+          chapter.data.test !== undefined &&
+          chapter.data.lessons[chapter.data.lessons.length - 1] === lesson.id.split('/').pop(),
         position: {
           index: chapter.data.lessons.findIndex((leaf) => `${chapter.id}/${leaf}` === lesson.id) + 1,
           total: chapter.data.lessons.length,
@@ -44,29 +47,27 @@ export async function getStaticPaths() {
   });
 }
 
-const { course, chapter, lesson, prev, next, position } = Astro.props;
+const { course, chapter, lesson, prev, next, chapterTestNext, position } = Astro.props;
 const { Content } = await render(lesson);
-const isExercise = lesson.data.desired_state !== undefined;
-// Prose-only readings have no workspace worth a second column.
-const hasDb = lesson.data.initial_sql !== undefined;
+const isExercise = lesson.data.quiz !== undefined;
 const courseHref = href(`/courses/${course.id}/`);
 const chapterHref = href(`/courses/${chapter.id}/`);
 ---
 
 <Layout title={lesson.data.title}>
   <nav class="breadcrumbs">
-    <a href={href('/courses/')}>courses</a> /
+    <a href={href('/courses/')}>Courses</a> /
     <a href={courseHref}>{course.data.title}</a> /
     <a href={chapterHref}>{chapter.data.title}</a>
   </nav>
   <div class="page-header">
     <h1>{lesson.data.title}</h1>
     <span class="muted">
-      {isExercise ? 'exercise' : 'reading'} · lesson {position.index}/{position.total} · {chapter.data.title}
+      {isExercise ? 'Exercise' : 'Reading'} · Lesson {position.index} of {position.total} · {chapter.data.title}
     </span>
   </div>
 
-  <div class="lesson-layout" class:list={[{ 'prose-only': !hasDb }]}>
+  <div class="lesson-layout" class:list={[{ 'prose-only': !isExercise }]}>
     <div class="instructions">
       <div class="prose">
         <Content />
@@ -96,7 +97,11 @@ const chapterHref = href(`/courses/${chapter.id}/`);
       )
     }
     {
-      next ? (
+      chapterTestNext ? (
+        <a class="btn" href={href(`/courses/${chapter.id}/test/`)}>
+          Chapter test →
+        </a>
+      ) : next ? (
         <a class="btn" href={href(`/courses/${next.lesson.id}/`)}>
           {next.lesson.data.title} →
         </a>

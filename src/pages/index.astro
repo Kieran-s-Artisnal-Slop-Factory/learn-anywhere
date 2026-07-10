@@ -9,21 +9,20 @@ import { href } from '../lib/paths.js';
 
 <Layout title="Home">
   <div class="page-header">
-    <h1>lite-learner</h1>
+    <h1>Learn Anywhere</h1>
     <a class="btn btn-primary" href={href('/courses/')}>Browse courses →</a>
   </div>
 
   <section class="intro">
-    <p class="tagline">Learn SQL by writing it.</p>
+    <p class="tagline">Courses that live in your browser.</p>
     <p class="muted">
-      lite-learner is an interactive way to learn SQLite. Every exercise runs against a real
-      SQLite database in your browser — write a statement in the editor, run it, and watch the
-      database change. Solutions are checked against the actual state of your database, not a
-      multiple-choice answer.
+      Learn Anywhere is a lightweight way to take a course anywhere. Lessons mix readings with
+      quizzes, every chapter ends with a test, and your scores are tracked locally so you can
+      see how you're doing at a glance.
     </p>
     <ul class="muted points">
       <li>No account and no server — enroll in a course and it's copied into this browser.</li>
-      <li>Your progress and editor buffers are saved locally and survive reloads.</li>
+      <li>Your progress, quiz answers, and test scores are saved locally and survive reloads.</li>
       <li>After the first visit, everything works fully offline.</li>
     </ul>
   </section>
@@ -43,7 +42,7 @@ import { href } from '../lib/paths.js';
   .tagline {
     font-size: var(--font-size-lg);
     font-weight: 700;
-    color: var(--gb-yellow);
+    color: var(--color-primary-strong);
   }
 
   .points {

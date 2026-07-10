@@ -6,7 +6,7 @@
  * Slugs are path-scoped ids (`course/chapter/lesson`), which double as the
  * URL path under /courses/.
  */
-import type { DesiredState } from '../sql/comparator';
+import type { Question } from '../assessment/types';
 
 export interface CourseContent {
   slug: string;
@@ -22,12 +22,13 @@ export interface ChapterContent {
   title: string;
   description: string;
   lessons: string[]; // ordered lesson slugs (full ids)
+  // Present ⇒ the chapter ends with a full-page test at <chapter>/test/.
+  test?: Question[];
 }
 
 /**
- * A lesson is an EXERCISE when it declares a `desired_state` solution;
- * otherwise it is a READING page (optionally with a seeded DB to explore).
- * `kind` is derived at build time, never authored.
+ * A lesson is an EXERCISE when it declares a `quiz`; otherwise it is a
+ * READING page. `kind` is derived at build time, never authored.
  */
 export type LessonKind = 'exercise' | 'reading';
 
@@ -37,6 +38,5 @@ export interface LessonContent {
   title: string;
   description: string;
   kind: LessonKind;
-  initial_sql?: string;
-  desired_state?: DesiredState;
+  quiz?: Question[];
 }

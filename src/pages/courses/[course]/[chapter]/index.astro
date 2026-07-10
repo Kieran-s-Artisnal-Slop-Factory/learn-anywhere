@@ -1,6 +1,6 @@
 ---
 // Chapter page — the chapter's index.md rendered as a real page, plus its
-// lesson list with live progress.
+// lesson list (and test, when it has one) with live progress.
 import { render } from 'astro:content';
 import Layout from '../../../../layouts/Layout.astro';
 import ChapterApp from '../../../../components/course/ChapterApp.svelte';
@@ -10,7 +10,7 @@ import {
   lessonContent,
   loadCourseTrees,
 } from '../../../../lib/content/bundle';
-import {href} from '../../../../lib/paths';
+import { href } from '../../../../lib/paths';
 
 export async function getStaticPaths() {
   const trees = await loadCourseTrees();
@@ -24,21 +24,22 @@ export async function getStaticPaths() {
 
 const { course, chapter, lessons, position } = Astro.props;
 const { Content } = await render(chapter);
-const exerciseCount = lessons.filter((l) => l.data.desired_state !== undefined).length;
+const exerciseCount = lessons.filter((l) => l.data.quiz !== undefined).length;
 const readingCount = lessons.length - exerciseCount;
+const hasTest = chapter.data.test !== undefined;
 ---
 
 <Layout title={chapter.data.title}>
   <nav class="breadcrumbs">
-    <a href={href('/courses/')}>courses</a> /
+    <a href={href('/courses/')}>Courses</a> /
     <a href={href(`/courses/${course.id}/`)}>{course.data.title}</a>
   </nav>
   <div class="page-header">
     <h1>{chapter.data.title}</h1>
     <span class="muted">
-      chapter {position.index}/{position.total} · {exerciseCount} exercises{readingCount > 0
+      Chapter {position.index} of {position.total} · {exerciseCount} exercises{readingCount > 0
         ? ` · ${readingCount} readings`
-        : ''}
+        : ''}{hasTest ? ' · 1 test' : ''}
     </span>
   </div>
   <div class="prose description">

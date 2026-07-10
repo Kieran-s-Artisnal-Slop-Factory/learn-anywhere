@@ -1,387 +1,194 @@
 # Course Development Guide
 
-How to author content for Lite Learner. Everything is markdown — no code
-changes needed. You write folders of markdown files, run a build, and deploy
-the output to any static host.
+How to author courses, quizzes, chapter tests, and glossary terms. For the
+system architecture, see the [Development Guide](Development%20Guide.md).
 
-## Contents
+## Layout
 
-- [The layout](#the-layout-one-folder-per-course-one-per-chapter)
-- [Ordering](#ordering-the-parent-lists-its-children)
-- [Lessons: exercise or reading](#lessons-exercise-or-reading)
-- [Writing `desired_state`](#writing-desired_state)
-- [Tips & tricks for tougher solutions](#tips--tricks-for-tougher-solutions)
-- [Previewing and validating](#previewing-and-validating)
-- [Renaming and updating content](#renaming-and-updating-content)
-- [Deploying](#deploying)
-- [The shipped courses](#the-shipped-courses)
-
-## The layout: one folder per course, one per chapter
-
-Content lives under `src/content/courses/`. Each course is a folder, each
-chapter a sub-folder, and each lesson a markdown file inside a chapter. The
-`index.md` at each level *is* that course's or chapter's main page:
+One folder per course, one sub-folder per chapter, lesson files inside:
 
 ```
 src/content/courses/
-  sqlite-basics/                    ← a COURSE
-    index.md                        ← the course page
-    what-is-a-database/             ← a CHAPTER
-      index.md                      ← the chapter page
-      tables-rows-and-columns.md    ← a LESSON
-      count-rows.md                 ← another lesson
-    reading-data-with-select/
-      index.md
-      select-everything.md
-      ...
-  intermediate-sqlite/
-    index.md
-    ...
+  1.effective-learning/            ← course folder (name = slug = URL segment)
+    index.md                       ← the COURSE page
+    memory-fundamentals/           ← chapter folder
+      index.md                     ← the CHAPTER page (may declare a test)
+      how-memory-works.md          ← a LESSON (may declare a quiz)
+src/content/glossary/
+  active-recall.md                 ← one glossary TERM per file
 ```
 
-Lesson files can be named anything (except `index`, which is reserved for the
-chapter page). Names only need to be unique **within their folder** — two
-chapters can both have a `schema.md`. The folder path is the identity:
-`sqlite-basics/beginner-project/schema` and
-`intermediate-sqlite/intermediate-project/schema` are different lessons, and
-the path is also the URL (`/courses/sqlite-basics/beginner-project/schema/`).
+Folder/file names become ids and URLs (`/courses/<course>/<chapter>/<lesson>/`),
+so rename them only if you accept resetting visitors' progress for that item.
+`test` is a **reserved lesson filename** — it's the chapter-test route.
 
-Moving or deleting a chapter is a folder operation — everything it owns goes
-with it.
+## Wiring and ordering
 
-## Ordering: the parent lists its children
+Parents list their children, and array order IS display order:
 
-Order lives in the parent's frontmatter, as plain relative names — a course
-lists its chapter **folder names**, a chapter lists its lesson **file names**
-(minus `.md`). **Array order is the order**; there is no `order` field.
-
-```markdown
-<!-- sqlite-basics/index.md (a COURSE) -->
----
-title: Beginner SQLite
+```yaml
+# course index.md
+title: Effective Learning
 chapters:
-  - what-is-a-database
-  - sql-fundamentals
----
+  - memory-fundamentals      # folder names, relative to the course folder
+  - study-techniques
 
-The course description, in markdown. The first paragraph doubles as the
-blurb on the course listing page, so front-load the pitch.
-```
-
-```markdown
-<!-- sqlite-basics/what-is-a-database/index.md (a CHAPTER) -->
----
-title: What is a Database?
+# chapter index.md
+title: Memory Fundamentals
 lessons:
-  - tables-rows-and-columns
-  - count-rows
-  - find-record
----
-
-The chapter description. It renders on the chapter's own page, and its text
-is also shown on the course page inside the chapter's card — keep the
-opening line strong.
+  - how-memory-works         # file names minus .md
+  - the-forgetting-curve
 ```
 
-Two rules the build enforces (`npm run build` fails with a pointed error):
+The build fails on a listed child that doesn't exist and on files no parent
+lists — broken wiring can't ship.
 
-- **Listing something that doesn't exist** — a `chapters:` or `lessons:`
-  entry with no matching folder/file.
-- **Orphans** — a chapter folder or lesson file that exists but is not listed
-  by its parent. Every file must be wired in, so nothing silently disappears.
-  (Keep drafts outside `src/content/` until they're ready.)
+## Lessons: readings and exercises
 
-## Lessons: exercise or reading
+A lesson's markdown body is the left-hand prose. Its kind is derived:
 
-There is one kind of file — a **lesson** — and what it declares decides how it
-behaves:
+- **No `quiz`** → a *reading* lesson, completed with "Mark as read".
+- **`quiz` present** → an *exercise*, completed by submitting the quiz (any
+  score completes it; the score is recorded and shown in the course overview).
 
-| Frontmatter                       | Kind     | The learner gets                                                             |
-| --------------------------------- | -------- | ---------------------------------------------------------------------------- |
-| `desired_state` (+ `initial_sql`) | exercise | editor, Run, **Check solution**; completes on a passing check                |
-| `initial_sql` only                | reading  | prose + an explorable database (editor, Run, DB viewer) and **Mark as read** |
-| neither                           | reading  | prose only, with **Mark as read**                                            |
+## Questions (quizzes and tests share this format)
 
-A reading lesson counts toward chapter/course completion exactly like an
-exercise — "Mark as read" stamps it complete. Use readings for concepts that
-don't need a checkable task (what a table is, how WAL works), optionally with
-a seeded database to poke at.
-
-### An exercise lesson
-
-```markdown
-<!-- sqlite-basics/what-is-a-database/count-rows.md -->
----
-title: "Rows are records: counting them"
-initial_sql: |
-  CREATE TABLE movies (id INTEGER PRIMARY KEY, title TEXT);
-  INSERT INTO movies (title) VALUES ('Inception'), ('Parasite');
-desired_state:
-  query: "SELECT movie_count FROM answer;"
-  rows:
-    - { movie_count: 2 }
----
-
-The lesson instructions, in full markdown. Fenced ```sql blocks are
-syntax-highlighted. End with a clearly marked "## Your task" section.
-```
-
-- **`initial_sql`** seeds a fresh in-memory database every time the lesson
-  loads (and on Reset). It doesn't need to be idempotent — it always runs
-  against a blank database.
-- **`desired_state`** is the embedded solution check (next section). A lesson
-  that declares `desired_state` must also declare `initial_sql` (the build
-  enforces it).
-
-### A reading lesson
-
-```markdown
-<!-- sqlite-basics/what-is-a-database/tables-rows-and-columns.md -->
----
-title: "Tables, rows, and columns"
-initial_sql: |
-  CREATE TABLE movies (id INTEGER PRIMARY KEY, title TEXT, year INTEGER);
-  INSERT INTO movies (title, year) VALUES ('Inception', 2010), ('Parasite', 2019);
----
-
-A **table** is like a named spreadsheet… poke at the `movies` table below.
-```
-
-Same file shape — it's a reading page simply because no solution is declared.
-Drop `initial_sql` too and it's pure prose.
-
-## Writing `desired_state`
-
-To check a solution, the app runs `desired_state.query` against the learner's
-current database and compares the result to `desired_state.rows`. Two rules
-shape everything you write here:
-
-1. **The check inspects database state, not the learner's SQL.** You can only
-   verify what the database looks like afterwards, not *how* they got there.
-2. **Comparison is positional.** Result row 1 is compared to expected row 1,
-   and the row count must match exactly — so **every query must have an
-   explicit `ORDER BY`** to make the order deterministic.
-
-### Checking query results
+`quiz:` (lessons) and `test:` (chapter `index.md`) are arrays of questions.
+Four types:
 
 ```yaml
-desired_state:
-  query: "SELECT age FROM users ORDER BY age;"
-  rows:
-    - { age: 21 }
-    - { age: 30 }
+quiz:
+  # Multiple choice: 2–5 options, rendered a–e. `answer` is a 0-based index.
+  - type: multiple_choice
+    prompt: When does forgetting begin?
+    options:
+      - Within hours
+      - After a week
+      - After a month
+    answer: 0
+
+  # All/None of the above are opt-in PER QUESTION and appended after the
+  # authored options. `answer: all` / `answer: none` selects them, or keep a
+  # numeric answer to use them as distractors.
+  - type: multiple_choice
+    prompt: Which strategies help?
+    options:
+      - Breaking material into small pieces
+      - Chunking related facts
+    all_of_the_above: true
+    none_of_the_above: true
+    answer: all
+
+  # True / false.
+  - type: true_false
+    prompt: Forgetting begins within hours.
+    answer: true
+
+  # Multi-select: `answer` is the exact set of correct option indices.
+  - type: multi_select
+    prompt: Which are mnemonic devices?
+    options: [An acronym, A vivid image, Re-reading, A story]
+    answer: [0, 1, 3]
+
+  # Short answer: free text, stored on the device for review, never graded
+  # and excluded from the score.
+  - type: short_answer
+    prompt: Explain the forgetting curve in your own words.
 ```
 
-Only the columns you list are compared — extra columns in the result are
-ignored, which lets you check just the fields that matter.
+Answer indices are validated at build time (out-of-range indices, `all`
+without `all_of_the_above`, duplicate multi-select indices all fail the
+build).
 
-### How values are compared
+Grading: unanswered questions can't be submitted; each gradable question is
+right or wrong (no partial credit on multi-select); the score is
+`correct/gradable`. Retakes are allowed and overwrite the stored responses
+and score.
 
-The *expected* value's type drives the comparison:
+## Chapter tests
 
-| Expected (YAML)  | Matches when…                                                                                                                             |
-| ---------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
-| `null`           | the result is SQL `NULL` (or the column is absent)                                                                                        |
-| integer (`21`)   | the result is exactly that number (INTEGER or REAL)                                                                                        |
-| decimal (`0.5`)  | the result is within `1e-9` (floating-point tolerance)                                                                                     |
-| `true` / `false` | the result is `1` / `0` (SQLite has no boolean type)                                                                                       |
-| string           | the result is exactly that TEXT — case-sensitive, no trimming, and no number↔string coercion (`"21"` does **not** match the integer `21`) |
+Add `test:` to a chapter's `index.md` to generate a full-page test at
+`/courses/<course>/<chapter>/test/`. The chapter's body text is shown on the
+chapter page as usual; the test page renders just the questions, full width.
 
-BLOBs are not supported. Integers beyond 2^53 are out of scope.
+A chapter with a test is only **complete** once every lesson is done *and*
+the test has been submitted. The last lesson's "next" button, the chapter
+page, and the course overview all link to the test.
 
-### Solutions are public
+## Flashcard decks
 
-The whole site is static, so `desired_state` ships to the browser and a
-curious learner can read the answer. That's by design — this is a learning
-tool, not an accredited assessment.
-
-## Tips & tricks for tougher solutions
-
-The "check the database, not the SQL" model is simple for `SELECT`-style
-tasks, but a lot of lessons teach things that don't naturally return rows —
-creating tables, indexes, triggers, constraints, PRAGMAs. The trick is almost
-always to **write a query that turns the thing you want to verify into rows**,
-then compare those. SQLite's own catalog and `pragma_*` table-valued functions
-are your toolkit.
-
-### Making read-only tasks checkable
-
-A pure `SELECT` exercise would pass without the learner doing anything, since
-the seeded database already satisfies it. Give read tasks a verifiable side
-effect — have learners save their query as a table:
-
-```sql
-CREATE TABLE adults AS SELECT name FROM users WHERE age >= 18 ORDER BY name;
-```
-
-and then check `SELECT name FROM adults ORDER BY name;`. (Or, if there's truly
-nothing to verify, make it a reading lesson instead.)
-
-### Verifying a table's schema
-
-Use `pragma_table_info(<table>)` to turn a table's structure into rows. Prefer
-the table-valued function over a bare `PRAGMA` so you can add `ORDER BY`:
+One file per deck in `src/content/flashcards/`; the file name is the deck's
+slug (`/flashcards/<file-name>/`). Cards are plain text, front and back, in
+frontmatter; the markdown body is the deck description shown on the deck page
+and (first paragraph) in the deck listing:
 
 ```yaml
-desired_state:
-  query: "SELECT name, type, pk FROM pragma_table_info('users') ORDER BY cid;"
-  rows:
-    - { name: "id", type: "INTEGER", pk: 1 }
-    - { name: "name", type: "TEXT", pk: 0 }
+---
+title: Learning Science Terms
+cards:
+  - front: What is active recall?
+    back: Retrieving information from memory instead of re-reading it.
+  - front: Roughly how many chunks can working memory hold?
+    back: About four.
+---
+Key vocabulary from the Effective Learning course.
 ```
 
-`pragma_table_info` columns: `cid`, `name`, `type`, `notnull`, `dflt_value`,
-`pk`. Select just the ones the exercise is about (e.g. only `notnull` for a
-`NOT NULL` lesson) so unrelated details don't make the check brittle.
+Practice is **session-only** (nothing is stored): the deck is shuffled, each
+card is revealed then marked "Got it" or "Again", and "Again" cards return to
+the back of the queue until every card has been answered correctly once. A
+round summary reports how many cards needed repeats. Keyboard shortcuts:
+Space/Enter flips, `1` = got it, `2` = again.
 
-### Verifying that an object exists (tables, indexes, views, triggers)
+Notes:
 
-`sqlite_master` (aka `sqlite_schema`) has one row per schema object. It's the
-go-to for "did the learner create X":
+- `front`/`back` are plain text — markdown and `[[glossary]]` syntax are not
+  rendered inside cards (the deck *description* supports both).
+- A deck must have at least one card (build-enforced).
+- Decks are standalone; they aren't tied to a course, so use the description
+  to say which course/chapter they accompany.
 
-```sql
--- All user tables in the database
-SELECT tbl_name FROM sqlite_master WHERE type = 'table' ORDER BY name;
+## Glossary terms
 
--- Did they create the expected index? (filter out auto-created sqlite_* ones)
-SELECT name FROM sqlite_master
-WHERE type = 'index' AND name NOT LIKE 'sqlite_%'
-ORDER BY name;
-```
-
-`type` is one of `table`, `index`, `view`, `trigger`. Filtering
-`name NOT LIKE 'sqlite_%'` drops SQLite's internal objects so the learner's
-work is all that remains. You can also check the object's stored definition via
-the `sql` column when *how* it was declared matters.
-
-### Verifying data changes (INSERT / UPDATE / DELETE)
-
-Just query the affected rows back with an `ORDER BY`, selecting the columns
-that should have changed:
+One file per term in `src/content/glossary/`:
 
 ```yaml
-desired_state:
-  query: "SELECT name, active FROM users ORDER BY id;"
-  rows:
-    - { name: "Alice", active: false }
-    - { name: "Bob", active: true }
+---
+term: Active recall            # display name (popup title, default link text)
+short: Deliberately retrieving information from memory instead of re-reading it.
+---
+The markdown body — the term's landing page at /glossary/<file-name>/.
 ```
 
-For a DELETE, assert the survivors (and remember: an empty `rows: []` asserts
-the table is empty).
+Keep `term` and `short` on a single line each — the remark plugin reads them
+with a minimal parser.
 
-### Verifying settings and counts
+Reference terms from any markdown body (courses, chapters, lessons, other
+glossary entries):
 
-PRAGMAs that return a value can be selected directly, and aggregates collapse
-a whole table into one checkable number:
-
-```sql
-SELECT foreign_keys FROM pragma_foreign_keys;   -- 1 after PRAGMA foreign_keys = ON
-SELECT COUNT(*) AS n FROM orders;               -- becomes { n: <count> }
+```
+[[active-recall]]                  → links as "Active recall"
+[[active-recall|active recall]]    → links with your own display text
 ```
 
-### General advice
+Readers get a popup with the short description and a "Read more" link to the
+landing page. Notes:
 
-- **Always `ORDER BY`.** Without it, row order is undefined and a correct
-  solution can fail intermittently.
-- **Check the minimum.** Select only the columns that prove the task is done;
-  extra columns are ignored, but selecting them invites brittleness.
-- **Test the failure cases.** In the dev server, run not just the intended
-  solution but the wrong-but-close attempts you expect from learners, and make
-  sure they *fail*. State-based checking means an unexpected shortcut can pass.
+- The file name (minus `.md`) is the slug you reference. Unknown slugs fail
+  the build.
+- The plugin loads the term list when the dev server starts — **restart `npm
+  run dev` after adding a term**.
+- References inside code blocks and `inline code` are left alone.
+- Use the `|display` form for mid-sentence casing (the default display is the
+  `term` field verbatim).
 
-## Previewing and validating
+## Checklist for a new course
 
-```sh
-npm run dev      # live preview; Astro prints the URL
-npm run build    # full validation + static output in dist/
-```
-
-The build validates everything: frontmatter against the schemas (a
-`desired_state` without `initial_sql`, a missing `title`, …), listed children
-that don't exist, and orphaned files nothing lists.
-
-To hand-test an exercise, open it in the dev server, write the intended
-solution, run it, and press **Check solution**.
-
-## Renaming and updating content
-
-Learner progress is stored in the browser, keyed by the content's **path**
-(`course/chapter/lesson`), next to a cached copy of the content. On each visit
-the app compares a content hash and refreshes stale cached content **without
-touching progress** — so:
-
-- **Editing a file** (title, instructions, even `initial_sql` or
-  `desired_state`) is safe. Redeploy and every visitor picks up the new content
-  while keeping their completion state.
-- **Renaming or moving a file/folder** changes the path, which makes it a
-  *different* lesson/chapter/course: visitors lose their progress for it.
-  Avoid renaming published content; fix wording via `title` instead, which is
-  display-only.
-
-## Deploying
-
-```sh
-npm run build
-```
-
-Upload `dist/` to any static host — GitHub Pages, Netlify, Cloudflare Pages, or
-a plain file server. No special headers or server config are required. For
-sub-path deploys (e.g. GitHub Pages under `/repo/`), set
-[`base`](https://docs.astro.build/en/reference/configuration-reference/#base)
-in `astro.config.mjs`; the service worker and internal links pick it up
-automatically.
-
-After a redeploy, returning visitors get the new content on their next online
-visit (the service worker is network-first for pages); offline visitors keep
-working against their cached copy.
-
-## The shipped courses
-
-Three courses ship in `src/content/courses/`. Extend or replace them freely —
-this is the intended progression:
-
-### Beginner SQLite (`sqlite-basics`)
-
-From never having touched a database to comfortably exploring one, querying it,
-and doing basic CRUD.
-
-1. What is a Database? — tables, rows, columns, primary keys
-2. SQL Fundamentals — statements, keywords, comments, termination
-3. What Makes SQLite Different? — single-file, embedded vs server
-4. Exploring an Existing Database — `sqlite_master`, schema, types, NULLs
-5. Reading Data with `SELECT` — columns, aliases, `DISTINCT`, `LIMIT`
-6. Filtering Data — `WHERE`, `IN`, `BETWEEN`, `LIKE`, `IS NULL`
-7. Sorting and Limiting — `ORDER BY`, `OFFSET`, top-N, pagination
-8. Creating Tables — `CREATE TABLE`, types, `PRIMARY KEY`, defaults
-9. Modifying Data (CRUD) — `INSERT`, `UPDATE`, `DELETE`
-10. Relationships and Joins — foreign keys, `INNER`/`LEFT JOIN`
-11. Beginner Project — build and query a small movie/library database
-
-### Intermediate SQLite (`intermediate-sqlite`)
-
-Build reliable databases and write production-quality SQL.
-
-1. Idempotent Database Changes — `IF NOT EXISTS`, re-runnable scripts
-2. Constraints — `NOT NULL`, `UNIQUE`, `CHECK`, `FOREIGN KEY`, `DEFAULT`
-3. UPSERT and Conflict Handling — `INSERT OR IGNORE/REPLACE`, `ON CONFLICT`
-4. Transactions — atomicity, `BEGIN`/`COMMIT`/`ROLLBACK`, savepoints
-5. Importing and Bulk Operations — batch insert/update/delete
-6. Indexes — single-column, composite, covering, when *not* to index
-7. Query Planning — `EXPLAIN QUERY PLAN`, scans vs index usage
-8. Intermediate Project — an inventory/order system tying it together
-
-### Advanced SQLite (`advanced-sqlite`)
-
-Production features and how SQLite works internally.
-
-1. PRAGMAs — settings, `foreign_keys`, `journal_mode`, `integrity_check`
-2. Common Table Expressions — `WITH`, multiple and recursive CTEs
-3. Views — `CREATE VIEW`, reusable reports
-4. Triggers — `BEFORE`/`AFTER`, auditing, validation, cascades
-5. WAL Mode and Concurrency — journal modes, checkpointing, tradeoffs
-6. Extensions — JSON1, FTS5, RTree
-7. Aggregation and Analytics — `GROUP BY`, `HAVING`, window functions
-8. Query Optimization — `ANALYZE`, statistics, optimizing joins
-9. Advanced Schema Design — normalization, `WITHOUT ROWID`, generated columns
-10. Final Capstone — a production-style database using nearly everything
+1. Create the course folder + `index.md` (title, `chapters:` list, body).
+2. Create each chapter folder + `index.md` (title, `lessons:` list, optional
+   `test:`, body).
+3. Write lessons; add `quiz:` to the ones that should be exercises.
+4. Add/reference glossary terms as you go.
+5. `npm run build` — fix anything it reports (wiring, schema, glossary).
+6. Walk through it on the dev server: enroll, take a quiz, take a test, and
+   check the score overview on /courses/.

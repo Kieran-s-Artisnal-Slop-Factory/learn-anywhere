@@ -36,7 +36,7 @@ export async function downloadExport(): Promise<void> {
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = `lite-learner-backup-${envelope.exportedAt.slice(0, 10)}.json`;
+  a.download = `learn-anywhere-backup-${envelope.exportedAt.slice(0, 10)}.json`;
   a.click();
   URL.revokeObjectURL(url);
 }
@@ -53,7 +53,7 @@ export async function importData(envelope: ExportEnvelope): Promise<ImportResult
     typeof envelope.schemaVersion !== 'number' ||
     typeof envelope.data !== 'object'
   ) {
-    throw new Error('Not a valid lite-learner backup file');
+    throw new Error('Not a valid learn-anywhere backup file');
   }
   if (envelope.schemaVersion > DB_VERSION) {
     throw new Error(

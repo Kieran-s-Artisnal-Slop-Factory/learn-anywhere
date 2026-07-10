@@ -6,20 +6,24 @@
   const links = [
     { href: href('/'), label: 'Home' },
     { href: href('/courses/'), label: 'Courses' },
-    { href: href('/playground/'), label: 'Playground' },
+    { href: href('/flashcards/'), label: 'Flashcards' },
+    { href: href('/glossary/'), label: 'Glossary' },
     { href: href('/settings/'), label: 'Settings' },
   ];
 
   const normalize = (p: string) => p.replace(/\/+$/, '') || '/';
-  // Section-aware: /courses/… keeps Courses highlighted.
-  const isCurrent = (href: string) =>
-    href === '/'
-      ? normalize(currentPath) === '/'
-      : normalize(currentPath).startsWith(normalize(href));
+  // Section-aware: /courses/… keeps Courses highlighted. Home is the base
+  // path itself, so it must match exactly — prefix-matching it would light
+  // up on every page.
+  const homeHref = href('/');
+  const isCurrent = (linkHref: string) =>
+    linkHref === homeHref
+      ? normalize(currentPath) === normalize(homeHref)
+      : normalize(currentPath).startsWith(normalize(linkHref));
 </script>
 
 <header class="navbar">
-  <a class="brand" href={href('/')}>lite-learner</a>
+  <a class="brand" href={href('/')}>Learn Anywhere</a>
 
   <button
     class="hamburger"

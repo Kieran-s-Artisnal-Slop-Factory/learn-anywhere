@@ -2,10 +2,13 @@
 import { defineConfig } from 'astro/config';
 
 import svelte from '@astrojs/svelte';
+import { remarkGlossary } from './src/lib/glossary/remark-glossary.mjs';
+
+const base = '/learn-anywhere';
 
 // https://astro.build/config
 export default defineConfig({
-  base:"/lite-learner",
+  base,
   integrations: [svelte()],
   markdown: {
     // Dual gruvbox themes; defaultColor:false emits --shiki-light/--shiki-dark
@@ -14,10 +17,9 @@ export default defineConfig({
       themes: { light: 'gruvbox-light-medium', dark: 'gruvbox-dark-medium' },
       defaultColor: false,
     },
-  },
-  vite: {
-    // Per the sqlite-wasm docs: keep Vite from pre-bundling the WASM loader,
-    // which breaks its worker/asset URL resolution in dev.
-    optimizeDeps: { exclude: ['@sqlite.org/sqlite-wasm'] },
+    // [[term]] / [[term|display]] → glossary popup links. The plugin reads
+    // src/content/glossary at config-load time, so restart the dev server
+    // after adding or renaming a term.
+    remarkPlugins: [[remarkGlossary, { base }]],
   },
 });

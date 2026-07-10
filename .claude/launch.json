@@ -7,18 +7,6 @@
       "runtimeArgs": ["run", "dev"],
       "port": 4321,
       "autoPort": true
-    },
-    {
-      "name": "preview",
-      "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "preview"],
-      "port": 4321
-    },
-    {
-      "name": "dev-alt",
-      "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "dev", "--", "--port", "4331"],
-      "port": 4331
     }
   ]
 }

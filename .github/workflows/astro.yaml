@@ -1,4 +1,4 @@
-# Sample workflow for building and deploying an Astro site to GitHub Pages
+﻿# Sample workflow for building and deploying an Astro site to GitHub Pages
 #
 # To get started with Astro see: https://docs.astro.build/en/getting-started/
 #
@@ -71,7 +71,7 @@ jobs:
         run: |
           ${{ steps.detect-package-manager.outputs.runner }} astro build \
             --site "https://kieranwood.ca" \
-            --base "/lite-learner"
+            --base "/learn-anywhere"
         working-directory: ${{ env.BUILD_PATH }}
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3

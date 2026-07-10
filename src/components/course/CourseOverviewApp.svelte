@@ -1,15 +1,18 @@
 <script lang="ts">
   /**
    * The interactive body of the course page: enroll / continue quick-access
-   * plus every chapter and its lessons with live progress. Enrolling copies
-   * the whole course bundle into IndexedDB via the content-hash sync; the
-   * same sync refreshes stale cached content on every visit.
+   * plus every chapter and its lessons (and chapter test) with live progress.
+   * Enrolling copies the whole course bundle into IndexedDB via the
+   * content-hash sync; the same sync refreshes stale cached content on every
+   * visit.
    */
   import { onMount } from 'svelte';
+  import { percent } from '../../lib/assessment/grade';
   import { get } from '../../lib/db/repo';
   import type { Chapters, Courses, Lessons } from '../../lib/db/types';
   import type { ChapterContent, CourseContent, LessonContent } from '../../lib/content/types';
   import { syncCourseBundle } from '../../lib/content/sync';
+  import { stripGlossaryRefs } from '../../lib/glossary/strip';
   import Card from '../Card.svelte';
   import {href as linkCorrector} from '../../lib/paths';
 
@@ -34,7 +37,8 @@
 
   /**
    * Where "Continue" goes: the first incomplete lesson, preferring the
-   * chapter the visitor was last in (course.current_chapter).
+   * chapter the visitor was last in (course.current_chapter). A chapter
+   * whose lessons are all done but whose test is untaken points at the test.
    */
   const continueTarget = $derived.by(() => {
     if (!courseRow || courseRow.completed) return null;
@@ -45,8 +49,11 @@
       for (const slug of chapter.lessons) {
         if (!lessonRows.get(slug)?.completed) {
           const lesson = lessonBySlug.get(slug);
-          if (lesson) return { chapter, lesson };
+          if (lesson) return { chapter, lesson, test: false };
         }
+      }
+      if ((chapter.test?.length ?? 0) > 0 && !chapterRows.get(chapter.slug)?.test_completed) {
+        return { chapter, lesson: null, test: true };
       }
     }
     return null;
@@ -61,7 +68,9 @@
 
   /** Split `text` on `inline code` spans so descriptions render backticks. */
   function inlineCode(text: string): { code: boolean; text: string }[] {
-    return text.split('`').map((part, i) => ({ code: i % 2 === 1, text: part }));
+    return stripGlossaryRefs(text)
+      .split('`')
+      .map((part, i) => ({ code: i % 2 === 1, text: part }));
   }
 
   async function refresh() {
@@ -114,7 +123,7 @@
           <p class="qa-title">✓ Course completed</p>
           <p class="muted qa-sub">
             Finished {new Date(courseRow.completed).toLocaleDateString()} — every lesson stays
-            open for experimenting.
+            open for reviewing and retaking.
           </p>
         </div>
       </div>
@@ -128,15 +137,23 @@
             {continueTarget.chapter.title} · {totalDone}/{bundle.lessons.length} lessons done
           </p>
         </div>
-        <a class="btn btn-primary" href={href(continueTarget.lesson.slug)}>
-          {courseRow?.started ? 'Continue' : 'Start'}: {continueTarget.lesson.title} →
-        </a>
+        {#if continueTarget.test}
+          <a class="btn btn-primary" href={href(`${continueTarget.chapter.slug}/test`)}>
+            Take the chapter test →
+          </a>
+        {:else if continueTarget.lesson}
+          <a class="btn btn-primary" href={href(continueTarget.lesson.slug)}>
+            {courseRow?.started ? 'Continue' : 'Start'}: {continueTarget.lesson.title} →
+          </a>
+        {/if}
       </div>
     {/if}
 
     {#each bundle.chapters as chapter, i (chapter.slug)}
       {@const done = chapterDone(chapter)}
       {@const chapterRow = chapterRows.get(chapter.slug)}
+      {@const hasTest = (chapter.test?.length ?? 0) > 0}
+      {@const testPct = chapterRow?.test_score ? percent(chapterRow.test_score) : null}
       <Card
         title={`${i + 1}. ${chapter.title}`}
         titleHref={enrolled ? href(chapter.slug) : undefined}
@@ -178,6 +195,19 @@
             {/if}
           {/each}
         </ol>
+        {#if hasTest}
+          <div class="test-row">
+            {#if enrolled}
+              <a href={href(`${chapter.slug}/test`)}>Chapter test</a>
+            {:else}
+              <span>Chapter test</span>
+            {/if}
+            <span class="badge">test</span>
+            {#if chapterRow?.test_completed}
+              <span class="badge badge-done">✓ {testPct === null ? 'taken' : `${testPct}%`}</span>
+            {/if}
+          </div>
+        {/if}
       </Card>
     {/each}
   </div>
@@ -218,7 +248,15 @@
     display: list-item;
   }
 
-  .lesson-list .badge {
+  .lesson-list .badge,
+  .test-row .badge {
     margin-left: var(--space-2);
+  }
+
+  .test-row {
+    margin-top: var(--space-3);
+    padding-top: var(--space-3);
+    border-top: 1px dashed var(--border-color);
+    padding-left: var(--space-5);
   }
 </style>
