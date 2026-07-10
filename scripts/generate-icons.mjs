@@ -1,8 +1,8 @@
 /**
- * Generates the PWA icons in public/icons/ from the favicon's database-
- * cylinder design, using only node:zlib (no image libraries). Re-run with
+ * Generates the PWA icons in public/icons/ from the favicon's graduation-cap
+ * design, using only node:zlib (no image libraries). Re-run with
  * `node scripts/generate-icons.mjs` whenever the brand colors change —
- * colors below mirror --gb-orange-strong / gruvbox bg0 in theme.css.
+ * colors below mirror the "boring" palette's accent (--pal-accent, light).
  *
  * Outputs:
  *   icon-192.png / icon-512.png       — purpose "any" (rounded tile, transparent corners)
@@ -13,8 +13,8 @@ import { mkdirSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-const ORANGE = [0xd6, 0x5d, 0x0e]; // gruvbox neutral orange
-const CREAM = [0xfb, 0xf1, 0xc7]; // gruvbox light bg0
+const BLUE = [0x25, 0x63, 0xeb]; // boring palette accent
+const WHITE = [0xff, 0xff, 0xff];
 
 // ── Minimal PNG encoder (RGBA, 8-bit) ───────────────────────────────────
 const CRC_TABLE = new Int32Array(256).map((_, n) => {
