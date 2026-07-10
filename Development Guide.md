@@ -171,8 +171,29 @@ The same components serve both assessment kinds:
 
 `grade.ts` is a **pure function** — `(questions, responses) → results +
 score` — kept free of DOM/DB imports so the subtle rules (effective option
-indices with all/none appended, exact-set multi-select, ungraded short
+indices with all/none appended, exact-set multi-select, ungraded short/long
 answers, unanswered-counts-as-wrong) are unit-tested in `grade.test.ts`.
+
+### Result endpoints & the profile
+
+A quiz/test may declare `result_endpoint` in frontmatter; the payload shape
+and POST logic live in `lib/assessment/submit.ts` (pure builders +
+`postResults`, tested in `submit.test.ts`). AssessmentForm blocks submission
+until the visitor's **profile** (`lib/profile.ts` — name + email in
+localStorage, set during onboarding or in Settings) is complete, because the
+identity travels as `x-sender-name`/`x-sender-email` headers. Local
+completion is deliberately independent of the send: a failed POST keeps the
+local grade and offers a retry. This is explicitly *not* a security feature —
+answers ship in the page; see the Course Development Guide.
+
+### Contact endpoint
+
+`contactEndpoint` in `astro.config.mjs` is exposed to client code via a Vite
+define (`lib/contact.ts`). When non-empty: `FeedbackButton.svelte` renders on
+lesson/test pages (subject `Feedback: <lesson> <url>`), and the navbar gains
+a Contact link to `/contact/` (custom subject + message via
+`ContactApp.svelte`). Both POST form data (`subject`, `message`, optional
+sender fields/headers) to the endpoint.
 
 ## Progress model
 

@@ -80,6 +80,13 @@ describe('grade', () => {
     expect(score).toEqual({ correct: 0, gradable: 0 });
   });
 
+  it('records long answers without grading them', () => {
+    const q: Question = { type: 'long_answer', prompt: 'Discuss at length' };
+    const { results, score } = grade([q], ['a whole essay']);
+    expect(results[0]).toEqual({ correct: null, expected: null });
+    expect(score).toEqual({ correct: 0, gradable: 0 });
+  });
+
   it('counts unanswered gradable questions as wrong', () => {
     const { score } = grade([mc(), mc()], [1]);
     expect(score).toEqual({ correct: 1, gradable: 2 });
@@ -109,10 +116,13 @@ describe('allAnswered', () => {
     expect(allAnswered([q], [[1]])).toBe(true);
   });
 
-  it('requires non-blank text for short answers', () => {
-    const q: Question = { type: 'short_answer', prompt: 's' };
-    expect(allAnswered([q], ['  '])).toBe(false);
-    expect(allAnswered([q], ['x'])).toBe(true);
+  it('requires non-blank text for short and long answers', () => {
+    const short: Question = { type: 'short_answer', prompt: 's' };
+    expect(allAnswered([short], ['  '])).toBe(false);
+    expect(allAnswered([short], ['x'])).toBe(true);
+    const long: Question = { type: 'long_answer', prompt: 'l' };
+    expect(allAnswered([long], ['  '])).toBe(false);
+    expect(allAnswered([long], ['an essay'])).toBe(true);
   });
 });
 

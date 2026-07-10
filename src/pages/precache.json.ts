@@ -17,6 +17,7 @@ export const GET: APIRoute = async () => {
     'glossary/',
     'settings/',
     'onboarding/',
+    'contact/',
     'favicon.svg',
     'manifest.webmanifest',
     'icons/icon-192.png',

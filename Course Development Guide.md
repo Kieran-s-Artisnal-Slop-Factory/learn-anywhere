@@ -1,7 +1,6 @@
 # Course Development Guide
 
-How to author courses, quizzes, chapter tests, and glossary terms. For the
-system architecture, see the [Development Guide](Development%20Guide.md).
+How to author courses, quizzes, chapter tests, and glossary terms. For  technical details like the system architecture, see the [Development Guide](Development%20Guide.md).
 
 ## Layout
 
@@ -54,7 +53,7 @@ A lesson's markdown body is the left-hand prose. Its kind is derived:
 ## Questions (quizzes and tests share this format)
 
 `quiz:` (lessons) and `test:` (chapter `index.md`) are arrays of questions.
-Four types:
+Five types:
 
 ```yaml
 quiz:
@@ -65,7 +64,7 @@ quiz:
       - Within hours
       - After a week
       - After a month
-    answer: 0
+    answer: 0 # Meaning `Within Hours` is correct
 
   # All/None of the above are opt-in PER QUESTION and appended after the
   # authored options. `answer: all` / `answer: none` selects them, or keep a
@@ -90,10 +89,16 @@ quiz:
     options: [An acronym, A vivid image, Re-reading, A story]
     answer: [0, 1, 3]
 
-  # Short answer: free text, stored on the device for review, never graded
-  # and excluded from the score.
+  # Short answer: one line of free text. Stored on the device (and sent to
+  # the result endpoint, if one is set), but NEVER auto-graded — it does not
+  # contribute to the score.
   - type: short_answer
     prompt: Explain the forgetting curve in your own words.
+
+  # Long answer: same rules as short_answer but a multi-line textarea, for
+  # essay-style responses. Also never auto-graded.
+  - type: long_answer
+    prompt: Compare spaced repetition and cramming, with examples.
 ```
 
 Answer indices are validated at build time (out-of-range indices, `all`
@@ -102,8 +107,57 @@ build).
 
 Grading: unanswered questions can't be submitted; each gradable question is
 right or wrong (no partial credit on multi-select); the score is
-`correct/gradable`. Retakes are allowed and overwrite the stored responses
-and score.
+`correct/gradable`. Short/long answers are excluded from `gradable` entirely.
+Retakes are allowed and overwrite the stored responses and score.
+
+## Sending results for marking (`result_endpoint`)
+
+Add `result_endpoint: <url>` next to a lesson's `quiz:` or a chapter's
+`test:` and every submission is also POSTed to that URL, so a person can mark
+it later:
+
+```yaml
+title: Final Essay Quiz
+quiz:
+  - type: multiple_choice
+    prompt: …
+    options: [a, b]
+    answer: 0
+  - type: long_answer
+    prompt: Argue for or against spaced repetition in one paragraph.
+result_endpoint: https://example.com/course-results
+```
+
+This is how a course author receives test information to evaluate someone
+with more nuance than multiple choice allows — the intended pattern is a
+quiz/test that mixes auto-graded questions with `short_answer`/`long_answer`
+ones, all shipped off together for review.
+
+> **This is not secure and not for accredited assessment.** The correct
+> answers are baked into the page (grading runs in the browser), and the
+> sender identity is whatever the visitor typed into their profile — nothing
+> is verified. It's meant for environments that aren't accredited but need
+> more nuanced feedback than a multiple-choice score: internal training,
+> community courses, workshops.
+
+How it behaves:
+
+- Submission is **blocked until the visitor sets a name and email**
+  (Settings, or during onboarding). The form is disabled with an error banner
+  telling them to set those values first; the receiver gets them as
+  `x-sender-name` / `x-sender-email` request headers (and duplicated as
+  `sender_name`/`sender_email` form fields).
+- Local grading and lesson/chapter completion still happen even if the send
+  fails (the app is offline-first); a failed send shows an error with a
+  retry button. Retaking re-sends.
+- The POST body is standard form data:
+  `kind` (`quiz`|`test`), `slug`, `title`, `submitted_at`, `score_correct`,
+  `score_gradable`, `sender_name`, `sender_email`, and per question
+  `q<N>_type`, `q<N>_prompt`, `q<N>_response` (human-readable text),
+  `q<N>_correct` (`true`/`false`/`ungraded`).
+- Your endpoint must handle **CORS**: the custom headers make this a
+  preflighted request, so answer `OPTIONS` and allow
+  `x-sender-name, x-sender-email` from your site's origin.
 
 ## Chapter tests
 
@@ -114,6 +168,27 @@ chapter page as usual; the test page renders just the questions, full width.
 A chapter with a test is only **complete** once every lesson is done *and*
 the test has been submitted. The last lesson's "next" button, the chapter
 page, and the course overview all link to the test.
+
+Chapters support `result_endpoint:` too (next to `test:`) — see
+[Sending results for marking](#sending-results-for-marking-result_endpoint).
+
+## Collecting learner feedback (`contactEndpoint`)
+
+Separately from graded results, the site can collect free-form feedback. Set
+`contactEndpoint` in `astro.config.mjs` to a POST endpoint you host, and the
+site grows:
+
+- a **"Give us feedback on this lesson"** button at the bottom of every
+  lesson and test page, opening a plain-text form whose subject is fixed to
+  `Feedback: <lesson name> <url>`;
+- a **Contact** link in the navbar to a general form with a custom subject
+  and message.
+
+The POST body is form data: `subject`, `message`, plus
+`sender_name`/`sender_email` fields and `x-sender-name`/`x-sender-email`
+headers *when* the visitor has set a profile (unlike result endpoints, a
+profile is not required to send feedback). Leave `contactEndpoint` as an
+empty string to disable the whole feature.
 
 ## Flashcard decks
 

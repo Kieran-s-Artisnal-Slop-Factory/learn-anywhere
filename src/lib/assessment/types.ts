@@ -10,8 +10,11 @@
  *    appended after the authored options.
  *  - true_false
  *  - multi_select — checkboxes; the answer is the exact set of correct options
- *  - short_answer — free text, stored but never verified (not counted in the
- *    score)
+ *  - short_answer — one line of free text, stored but never graded (not
+ *    counted in the score)
+ *  - long_answer — multi-line free text, same non-grading rules as
+ *    short_answer; meant for quizzes/tests that are sent to a result
+ *    endpoint for human marking
  */
 
 export interface MultipleChoiceQuestion {
@@ -46,22 +49,28 @@ export interface ShortAnswerQuestion {
   prompt: string;
 }
 
+export interface LongAnswerQuestion {
+  type: 'long_answer';
+  prompt: string;
+}
+
 export type Question =
   | MultipleChoiceQuestion
   | TrueFalseQuestion
   | MultiSelectQuestion
-  | ShortAnswerQuestion;
+  | ShortAnswerQuestion
+  | LongAnswerQuestion;
 
 /**
  * One response per question, by position. `null` = unanswered.
  *  - multiple_choice: index into the EFFECTIVE option list (authored + all/none)
  *  - true_false: boolean
  *  - multi_select: selected indices
- *  - short_answer: the entered text
+ *  - short_answer / long_answer: the entered text
  */
 export type QuestionResponse = number | boolean | number[] | string | null;
 
-/** A graded submission. Short answers are recorded but never gradable. */
+/** A graded submission. Short/long answers are recorded but never gradable. */
 export interface Score {
   correct: number;
   gradable: number;

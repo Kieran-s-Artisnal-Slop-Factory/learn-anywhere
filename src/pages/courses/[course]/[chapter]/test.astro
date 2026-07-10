@@ -5,6 +5,7 @@
 // chapters schema). Submitting gates chapter completion; see lib/progress.ts.
 import Layout from '../../../../layouts/Layout.astro';
 import TestApp from '../../../../components/assessment/TestApp.svelte';
+import FeedbackButton from '../../../../components/contact/FeedbackButton.svelte';
 import { chapterContent, courseContent, loadCourseTrees } from '../../../../lib/content/bundle';
 import { href } from '../../../../lib/paths';
 
@@ -45,6 +46,8 @@ const questionCount = chapter.data.test?.length ?? 0;
     <a class="btn" href={href(`/courses/${chapter.id}/`)}>← Back to {chapter.data.title}</a>
     <a class="btn" href={href(`/courses/${course.id}/`)}>Back to course →</a>
   </nav>
+
+  <FeedbackButton client:only="svelte" title={`Test — ${chapter.data.title}`} />
 </Layout>
 
 <style>

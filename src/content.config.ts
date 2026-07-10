@@ -96,7 +96,18 @@ const shortAnswer = z.object({
   prompt: z.string(),
 });
 
-const question = z.discriminatedUnion('type', [multipleChoice, trueFalse, multiSelect, shortAnswer]);
+const longAnswer = z.object({
+  type: z.literal('long_answer'),
+  prompt: z.string(),
+});
+
+const question = z.discriminatedUnion('type', [
+  multipleChoice,
+  trueFalse,
+  multiSelect,
+  shortAnswer,
+  longAnswer,
+]);
 
 const courses = defineCollection({
   loader: glob({ base, pattern: '*/index.md', generateId }),
@@ -118,6 +129,11 @@ const chapters = defineCollection({
     }),
     // Present ⇒ the chapter ends with a full-page test that gates completion.
     test: z.array(question).min(1).optional(),
+    // POST target for test submissions (sent for human marking). NOT secure —
+    // answers are baked into the page; see the Course Development Guide.
+    result_endpoint: z.string().url().optional(),
+  }).refine((data) => !data.result_endpoint || data.test, {
+    message: 'result_endpoint requires a test to submit',
   }),
 });
 
@@ -128,6 +144,10 @@ const lessons = defineCollection({
     title: z.string(),
     // Present ⇒ the lesson is an exercise, completed by submitting the quiz.
     quiz: z.array(question).min(1).optional(),
+    // POST target for quiz submissions (sent for human marking).
+    result_endpoint: z.string().url().optional(),
+  }).refine((data) => !data.result_endpoint || data.quiz, {
+    message: 'result_endpoint requires a quiz to submit',
   }),
 });
 

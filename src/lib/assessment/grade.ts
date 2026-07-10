@@ -19,7 +19,9 @@ export interface GradeOutcome {
 function gradeOne(question: Question, response: QuestionResponse): QuestionResult {
   switch (question.type) {
     case 'short_answer':
-      // Stored, never verified.
+    case 'long_answer':
+      // Stored (and sent to the result endpoint, when one is configured)
+      // but never machine-graded.
       return { correct: null, expected: null };
     case 'true_false':
       return {
@@ -59,7 +61,9 @@ export function allAnswered(questions: Question[], responses: QuestionResponse[]
     const r = responses[i] ?? null;
     if (r === null) return false;
     if (q.type === 'multi_select') return Array.isArray(r) && r.length > 0;
-    if (q.type === 'short_answer') return typeof r === 'string' && r.trim() !== '';
+    if (q.type === 'short_answer' || q.type === 'long_answer') {
+      return typeof r === 'string' && r.trim() !== '';
+    }
     return true;
   });
 }

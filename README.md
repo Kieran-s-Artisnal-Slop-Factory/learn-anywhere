@@ -1,15 +1,24 @@
-# learn-anywhere
+# Learn Anywhere
 
-A **fully static, offline-first LMS** for traditional courses. Lessons mix
-readings with quizzes, every chapter can end with a full-page test, and a
-glossary provides wikipedia-style definition popups throughout the content.
-No backend, no accounts — enrollment copies a course into the browser's
-IndexedDB and everything (progress, answers, scores) stays on the device.
+*A fully static, offline-first LMS (learning management system)*. Designed to be a build-once, run anywhere system for simple, open course authoring.
 
-Built on [Astro](https://astro.build) + [Svelte 5](https://svelte.dev), derived
-from the [lite-learner](https://github.com/kieranwood/lite-learner) template
-with the SQL execution environment replaced by a configurable assessment
-system.
+## What is this for?
+
+If you have any of the below requirements, or they seem appealing, then Learn Anywhere might be a good fit:
+
+- **Cheap Hosting**; When you build the course you get static files, you can host these incredibly cheaply if not free
+- **Poor connection scenarios**; If you want a mini-course for a conference, or some other situation with bad connections, then this system will cache the course contents to the user device, meaning the WiFi only has to work long enough for the initial loading of the course
+- **No vendor Lock-in**; The code is open source, and the content is just plain markdown files, meaning you can take it anywhere you want. 
+
+## What is this not for?
+
+If you have any of the following requirements, you may be better off looking for other alternatives:
+
+- **Strict Marking**; The system has **all answers** available on the client, meaning it's easy to cheat in
+- **Integrations**; Any additional systems you want to integrate will need to be done manually in the code
+- **Storing Marks**; The system has no backend (no database or server), so while you can store results using the `result_endpoint` feature mentioned in the `Course Development Guide` document, it will require an additional server you need to maintain
+- **Cost Gating**; The system is designed to be open. Since everything is static there's no way to easily block people from getting access until they pay. This would need to be handled by an additional gating system, and due to the offline-first nature, it is **incredibly difficult to lock people out** if you want them to only have access for a limited period of time since the course contents are stored on device
+- **Plugins**; The feature set of the system is not designed to be easily extensible. Due to the focus on offline support making sweeping architecture and data model changes is not trivial.
 
 ## Features
 
@@ -21,7 +30,15 @@ system.
     above" toggles
   - true / false
   - multi-select
-  - short answer (stored for review, never graded)
+  - short answer and long answer (stored/sent for review, never auto-graded
+    and excluded from the score)
+- **Result endpoints** — a quiz or test can declare a `result_endpoint`;
+  submissions are POSTed there (with `x-sender-name`/`x-sender-email`
+  headers from the visitor's optional profile) so a person can mark written
+  answers. Not secure — answers are in the page — but useful for
+  non-accredited courses that want nuanced evaluation
+- **Feedback** — an optional `contactEndpoint` in `astro.config.mjs` adds
+  per-lesson feedback buttons and a general Contact page
 - **Score tracking** — the courses page shows lessons completed, overall
   score, and quiz/test breakdowns per enrolled course
 - **Flashcards** — authored decks of front/back cards with a shuffle-and-repeat
@@ -34,20 +51,21 @@ system.
 
 ## Quick start
 
+See the [Development Guide](Development%20Guide.md) for architecture and the
+[Course Development Guide](Course%20Development%20Guide.md) for authoring
+courses, quizzes, tests, and glossary terms.
+
+### Building
+
+Make sure you have npm (or an equivalent) installed, and run `npm install` to set up dependencies, then the following commands are available:
+
 ```sh
-npm install
 npm run dev       # dev server
 npm test          # vitest: grading rules + content resolver
 npm run build     # also the content-validation gate
 ```
 
-See the [Development Guide](Development%20Guide.md) for architecture and the
-[Course Development Guide](Course%20Development%20Guide.md) for authoring
-courses, quizzes, tests, and glossary terms.
-
 ## Deploying
 
-The site is static (`dist/`). `astro.config.mjs` sets `base: '/learn-anywhere'`
-for sub-path hosting (e.g. GitHub Pages — a workflow is included); set `base`
-to `/` to serve at a domain root. Every internal link goes through
-`lib/paths.ts`, so no other change is needed.
+The site is static, running `npm run build` will dump the files to a folder called `dist`. Take that folder and put it on any static site host.
+

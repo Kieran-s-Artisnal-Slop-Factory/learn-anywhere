@@ -6,6 +6,7 @@
 import { render } from 'astro:content';
 import Layout from '../../../../layouts/Layout.astro';
 import LessonApp from '../../../../components/exercise/LessonApp.svelte';
+import FeedbackButton from '../../../../components/contact/FeedbackButton.svelte';
 import {
   chapterContent,
   courseContent,
@@ -112,6 +113,8 @@ const chapterHref = href(`/courses/${chapter.id}/`);
       )
     }
   </nav>
+
+  <FeedbackButton client:only="svelte" title={lesson.data.title} />
 </Layout>
 
 <style>

@@ -98,6 +98,7 @@ export function chapterContent(entry: CollectionEntry<'chapters'>): ChapterConte
     description: body,
     lessons: entry.data.lessons.map((leaf) => `${entry.id}/${leaf}`),
     test: entry.data.test as Question[] | undefined,
+    result_endpoint: entry.data.result_endpoint,
   };
 }
 
@@ -111,5 +112,6 @@ export function lessonContent(entry: CollectionEntry<'lessons'>): LessonContent 
     // Derived, never authored: a declared quiz makes it an exercise.
     kind: entry.data.quiz ? 'exercise' : 'reading',
     quiz: entry.data.quiz as Question[] | undefined,
+    result_endpoint: entry.data.result_endpoint,
   };
 }

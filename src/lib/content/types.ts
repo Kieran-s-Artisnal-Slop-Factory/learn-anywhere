@@ -24,6 +24,8 @@ export interface ChapterContent {
   lessons: string[]; // ordered lesson slugs (full ids)
   // Present ⇒ the chapter ends with a full-page test at <chapter>/test/.
   test?: Question[];
+  // POST target for test submissions (human marking); see assessment/submit.ts.
+  result_endpoint?: string;
 }
 
 /**
@@ -39,4 +41,6 @@ export interface LessonContent {
   description: string;
   kind: LessonKind;
   quiz?: Question[];
+  // POST target for quiz submissions (human marking); see assessment/submit.ts.
+  result_endpoint?: string;
 }

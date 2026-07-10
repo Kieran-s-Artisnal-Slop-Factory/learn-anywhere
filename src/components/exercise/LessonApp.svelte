@@ -97,6 +97,8 @@
           initialResponses={row?.quiz_responses ?? null}
           submitLabel="Submit quiz"
           onSubmit={onQuizSubmit}
+          endpoint={lesson.result_endpoint ?? null}
+          meta={{ kind: 'quiz', slug: lesson.slug, title: lesson.title }}
         />
       {/if}
     </Card>

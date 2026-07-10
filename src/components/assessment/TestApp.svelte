@@ -77,6 +77,8 @@
       initialResponses={row?.test_responses ?? null}
       submitLabel="Submit test"
       onSubmit={onTestSubmit}
+      endpoint={chapter.result_endpoint ?? null}
+      meta={{ kind: 'test', slug: chapter.slug, title: chapter.title }}
     />
   {/if}
 </div>

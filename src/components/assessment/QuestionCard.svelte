@@ -118,9 +118,18 @@
       {/each}
     </div>
   {:else if question.type === 'short_answer'}
-    <p class="muted hint">Your answer is saved for your own review — it isn't graded.</p>
+    <p class="muted hint">Written answer — recorded but not auto-graded.</p>
+    <input
+      type="text"
+      placeholder="Type your answer…"
+      disabled={graded}
+      value={typeof response === 'string' ? response : ''}
+      oninput={(e) => onRespond((e.target as HTMLInputElement).value)}
+    />
+  {:else if question.type === 'long_answer'}
+    <p class="muted hint">Written answer — recorded but not auto-graded.</p>
     <textarea
-      rows="3"
+      rows="6"
       placeholder="Type your answer…"
       disabled={graded}
       value={typeof response === 'string' ? response : ''}
@@ -205,14 +214,18 @@
     border-color: var(--color-danger);
   }
 
-  textarea {
+  textarea,
+  input[type='text'] {
     width: 100%;
-    resize: vertical;
     background: var(--surface-raised-color, var(--surface-color));
     color: var(--text-color);
     border: 1px solid var(--border-color);
     border-radius: var(--radius-sm);
     padding: var(--space-2) var(--space-3);
     font: inherit;
+  }
+
+  textarea {
+    resize: vertical;
   }
 </style>

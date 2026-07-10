@@ -9,6 +9,7 @@
   } from '../../lib/db/export';
   import { requestPersistentStorage, type PersistState } from '../../lib/db/persistence';
   import { getPalette, setPalette, PALETTES, type Palette } from '../../lib/palette';
+  import { getProfile, setProfile } from '../../lib/profile';
   import {href} from '../../lib/paths';
 
   const THEME_KEY = 'learn-anywhere-theme';
@@ -23,8 +24,19 @@
   onMount(async () => {
     theme = localStorage.getItem(THEME_KEY) ?? 'auto';
     palette = getPalette();
+    const profile = getProfile();
+    profileName = profile.name;
+    profileEmail = profile.email;
     inDeveloperMode = sessionStorage.getItem(DEV_MODE_KEY) === '1';
   });
+
+  // ---- profile (saved as you type; gates result-endpoint quizzes/tests)
+  let profileName = $state('');
+  let profileEmail = $state('');
+
+  function saveProfile() {
+    setProfile({ name: profileName, email: profileEmail });
+  }
 
   function setPaletteChoice(value: Palette) {
     palette = value;
@@ -100,6 +112,25 @@
 {/if}
 
 <div class="stack">
+  <Card title="Profile">
+    <div class="stack">
+      <p class="muted small">
+        Optional, stored only in this browser. Courses that send quiz or test answers to their
+        authors for marking require both fields to be set before you can submit.
+      </p>
+      <div class="profile-fields">
+        <label>
+          Name
+          <input type="text" bind:value={profileName} oninput={saveProfile} autocomplete="name" placeholder="Ada Lovelace" />
+        </label>
+        <label>
+          Email
+          <input type="email" bind:value={profileEmail} oninput={saveProfile} autocomplete="email" placeholder="ada@example.com" />
+        </label>
+      </div>
+    </div>
+  </Card>
+
   <Card title="Appearance">
     <div class="stack">
       <div class="setting">
@@ -231,6 +262,13 @@
   .setting-label {
     font-weight: 600;
     margin-bottom: var(--space-2);
+  }
+
+  .profile-fields {
+    display: grid;
+    gap: var(--space-3);
+    grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+    max-width: 36rem;
   }
 
   .modal-backdrop {
