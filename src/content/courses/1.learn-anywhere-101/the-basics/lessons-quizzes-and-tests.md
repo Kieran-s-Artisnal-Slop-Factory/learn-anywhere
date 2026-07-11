@@ -34,9 +34,11 @@ completes the lesson. You can press **Try again** any time; the retake's
 score replaces the old one.
 
 Multiple-choice options are lettered a–e, and some questions include *All of
-the above* or *None of the above*. Multi-select questions need the exact set
-of correct options — close doesn't count. Written questions (you'll meet one
-in the chapter test) are recorded but never graded by the machine.
+the above* or *None of the above*. Multi-select questions normally need the
+exact set of correct options — close doesn't count — though a site can enable
+`partial_grades` to award partial marks for partially right selections.
+Written questions (you'll meet one in the chapter test) are recorded but
+never graded by the machine.
 
 ## Tests
 

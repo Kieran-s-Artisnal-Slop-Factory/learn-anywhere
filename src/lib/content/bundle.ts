@@ -11,35 +11,22 @@
  */
 import { createHash } from 'node:crypto';
 import { getCollection, type CollectionEntry } from 'astro:content';
-import { createMarkdownProcessor, type MarkdownProcessor } from '@astrojs/markdown-remark';
 import type { Question } from '../assessment/types';
-// @ts-expect-error — plain .mjs module (shared with astro.config.mjs, which
-// imports it before any TypeScript pipeline exists).
-import { remarkGlossary } from '../glossary/remark-glossary.mjs';
+import { renderMarkdownFragment } from './markdown';
 import { resolveTrees } from './resolve';
 import type { ChapterContent, CourseContent, LessonContent } from './types';
 
 /**
  * Question prompts are markdown too (glossary [[refs]] included), but they
  * live in frontmatter, which Astro's content pipeline leaves as plain
- * strings. This processor renders them at build time with the same glossary
- * plugin as lesson bodies; the HTML rides along as `prompt_html` next to the
- * raw prompt (which result-endpoint submissions keep sending as text).
+ * strings. Render them at build time; the HTML rides along as `prompt_html`
+ * next to the raw prompt (which result-endpoint submissions keep sending as
+ * text).
  */
-let promptProcessor: Promise<MarkdownProcessor> | null = null;
-
-async function renderPrompt(markdown: string): Promise<string> {
-  promptProcessor ??= createMarkdownProcessor({
-    remarkPlugins: [[remarkGlossary, { base: import.meta.env.BASE_URL }]],
-  });
-  const rendered = await (await promptProcessor).render(markdown);
-  return String(rendered.code);
-}
-
 async function withPromptHtml(questions: Question[] | undefined): Promise<Question[] | undefined> {
   if (!questions) return undefined;
   return Promise.all(
-    questions.map(async (q) => ({ ...q, prompt_html: await renderPrompt(q.prompt) }))
+    questions.map(async (q) => ({ ...q, prompt_html: await renderMarkdownFragment(q.prompt) }))
   );
 }
 

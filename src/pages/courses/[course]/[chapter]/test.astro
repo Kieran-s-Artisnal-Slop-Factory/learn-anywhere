@@ -13,15 +13,16 @@ export async function getStaticPaths() {
   const trees = await loadCourseTrees();
   return trees.flatMap((tree) =>
     tree.chapters
+      .map(({ chapter }, i) => ({ chapter, next: tree.chapters[i + 1]?.chapter ?? null }))
       .filter(({ chapter }) => chapter.data.test !== undefined)
-      .map(({ chapter }, ) => ({
+      .map(({ chapter, next }) => ({
         params: { course: tree.course.id, chapter: chapter.id.split('/').pop()! },
-        props: { course: tree.course, chapter },
+        props: { course: tree.course, chapter, nextChapter: next },
       }))
   );
 }
 
-const { course, chapter } = Astro.props;
+const { course, chapter, nextChapter } = Astro.props;
 const questionCount = chapter.data.test?.length ?? 0;
 const chapterPayload = await chapterContent(chapter);
 ---
@@ -44,8 +45,21 @@ const chapterPayload = await chapterContent(chapter);
   />
 
   <nav class="pager">
-    <a class="btn" href={href(`/courses/${chapter.id}/`)}>← Back to {chapter.data.title}</a>
-    <a class="btn" href={href(`/courses/${course.id}/`)}>Back to course →</a>
+    <span class="slot left">
+      <a class="btn" href={href(`/courses/${chapter.id}/`)}>← Back to {chapter.data.title}</a>
+    </span>
+    <span class="slot center">
+      <a class="btn" href={href(`/courses/${course.id}/`)}>Back to course</a>
+    </span>
+    <span class="slot right">
+      {
+        nextChapter && (
+          <a class="btn btn-primary" href={href(`/courses/${nextChapter.id}/`)}>
+            Next: {nextChapter.data.title} →
+          </a>
+        )
+      }
+    </span>
   </nav>
 
   <FeedbackButton client:only="svelte" title={`Test — ${chapter.data.title}`} />
@@ -53,10 +67,36 @@ const chapterPayload = await chapterContent(chapter);
 
 <style>
   .pager {
-    display: flex;
-    justify-content: space-between;
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: center;
     gap: var(--space-3);
     margin-top: var(--space-5);
-    flex-wrap: wrap;
+  }
+
+  .slot.left {
+    justify-self: start;
+  }
+
+  .slot.center {
+    justify-self: center;
+  }
+
+  .slot.right {
+    justify-self: end;
+  }
+
+  @media (max-width: 40rem) {
+    .pager {
+      grid-template-columns: 1fr;
+    }
+
+    .slot.left,
+    .slot.center,
+    .slot.right {
+      justify-self: stretch;
+      display: flex;
+      flex-direction: column;
+    }
   }
 </style>

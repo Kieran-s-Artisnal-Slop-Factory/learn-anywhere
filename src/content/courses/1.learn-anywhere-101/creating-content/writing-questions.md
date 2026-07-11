@@ -71,6 +71,15 @@ Both are opt-in **per question** and are appended after your options:
 Enable one and keep a numeric `answer` and it works as a distractor — this
 lesson's second question does exactly that.
 
+## Partial marks for multi-select
+
+By default multi-select is all-or-nothing. If you want partially right
+selections to earn partial marks, set `partial_grades = true` in
+`astro.config.mjs` — each correctly picked option earns a fraction, each
+wrong pick cancels one out (a question never scores below zero), and scores
+may come out fractional (like 3.5/5). It's a site-wide setting, applying to
+every quiz and test.
+
 ## The build has your back
 
 Answer indices out of range, `answer: all` without `all_of_the_above`,

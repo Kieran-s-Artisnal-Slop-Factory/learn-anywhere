@@ -58,9 +58,13 @@
   <legend>
     <span class="q-number">Question {index + 1}</span>
     {#if graded && result?.correct !== null}
-      <span class="badge" class:badge-done={result?.correct} class:badge-danger={!result?.correct}>
-        {result?.correct ? '✓ correct' : '✗ incorrect'}
-      </span>
+      {#if result?.correct}
+        <span class="badge badge-done">✓ correct</span>
+      {:else if (result?.partial ?? 0) > 0}
+        <span class="badge badge-active">◐ partial credit</span>
+      {:else}
+        <span class="badge badge-danger">✗ incorrect</span>
+      {/if}
     {:else if graded}
       <span class="badge">recorded</span>
     {/if}

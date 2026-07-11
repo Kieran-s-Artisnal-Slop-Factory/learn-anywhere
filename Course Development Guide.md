@@ -123,9 +123,18 @@ prompt in quotes when it contains `key: value` text or starts with a
 reserved character like a backtick or `#`.
 
 Grading: unanswered questions can't be submitted; each gradable question is
-right or wrong (no partial credit on multi-select); the score is
-`correct/gradable`. Short/long answers are excluded from `gradable` entirely.
-Retakes are allowed and overwrite the stored responses and score.
+right or wrong; the score is `correct/gradable`. Short/long answers are
+excluded from `gradable` entirely. Retakes are allowed and overwrite the
+stored responses and score.
+
+**Partial marks for multi-select** (`partial_grades` in `astro.config.mjs`,
+default `false`): when enabled site-wide, a partially right multi-select
+selection earns partial credit — each correctly selected option is worth
+`1/total-correct`, each wrong selection cancels one out, and a question never
+scores below zero. Scores (including `score_correct` in result-endpoint
+submissions) may then be fractional, and partially right questions are
+labelled `partial:<fraction>` instead of `false` in the submission. All other
+question types stay all-or-nothing.
 
 ## Sending results for marking (`result_endpoint`)
 
@@ -234,8 +243,10 @@ Space/Enter flips, `1` = got it, `2` = again.
 
 Notes:
 
-- `front`/`back` are plain text — markdown and `[[glossary]]` syntax are not
-  rendered inside cards (the deck *description* supports both).
+- `front`/`back` are **markdown**, rendered through the same pipeline as
+  question prompts — emphasis, inline code, and `[[glossary]]` references all
+  work. To show `[[...]]` or other syntax literally on a card, wrap it in
+  backticks (code spans are left alone). YAML quoting rules apply as usual.
 - A deck must have at least one card (build-enforced).
 - Decks are standalone; they aren't tied to a course, so use the description
   to say which course/chapter they accompany.

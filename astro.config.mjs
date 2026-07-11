@@ -21,6 +21,14 @@ const site= process.env.SITE?? undefined;
 // which you host separately. Empty string = feature disabled.
 const contactEndpoint = '';
 
+// Grading behavior for multi-select questions. false (default): all-or-
+// nothing — the answer must be the exact set of correct options. true:
+// partial marks — each correctly selected option earns a fraction, each
+// wrong selection cancels one out (never below zero for the question):
+//   points = max(0, correct selections − wrong selections) / total correct
+// Applies to every quiz and test on the site; scores may be fractional.
+const partial_grades = false;
+
 // https://astro.build/config
 export default defineConfig({
   base:base,
@@ -39,9 +47,10 @@ export default defineConfig({
     remarkPlugins: [[remarkGlossary, { base }]],
   },
   vite: {
-    // Expose the contact endpoint to client code (lib/contact.ts reads it).
+    // Expose site settings to client code (lib/contact.ts, lib/assessment/config.ts).
     define: {
       'import.meta.env.PUBLIC_CONTACT_ENDPOINT': JSON.stringify(contactEndpoint),
+      'import.meta.env.PUBLIC_PARTIAL_GRADES': JSON.stringify(partial_grades),
     },
   },
 });

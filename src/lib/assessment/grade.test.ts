@@ -61,6 +61,30 @@ describe('grade', () => {
     expect(grade([q], [1 as never]).score.correct).toBe(0);
   });
 
+  it('awards multi-select partial credit only when partialGrades is on', () => {
+    const q: Question = {
+      type: 'multi_select',
+      prompt: 'Pick the first three',
+      options: ['1', '2', '3', '4'],
+      answer: [0, 1, 2],
+    };
+    // 2 of 3 correct, no wrong picks → 2/3 of a point.
+    const two = grade([q], [[0, 1]], { partialGrades: true });
+    expect(two.results[0]?.correct).toBe(false);
+    expect(two.results[0]?.partial).toBeCloseTo(2 / 3);
+    expect(two.score.correct).toBeCloseTo(0.67);
+    // A wrong pick cancels a correct one: 2 hits − 1 miss = 1/3.
+    expect(grade([q], [[0, 1, 3]], { partialGrades: true }).score.correct).toBeCloseTo(0.33);
+    // Floor at zero: 1 hit − 3 would go negative… (1 hit, 1 miss → 0? no: 1-1=0)
+    expect(grade([q], [[0, 3]], { partialGrades: true }).score.correct).toBe(0);
+    // Fully correct is still a whole point, no `partial` field.
+    const full = grade([q], [[2, 1, 0]], { partialGrades: true });
+    expect(full.results[0]).toEqual({ correct: true, expected: [0, 1, 2] });
+    expect(full.score.correct).toBe(1);
+    // Default (off): all-or-nothing.
+    expect(grade([q], [[0, 1]]).score.correct).toBe(0);
+  });
+
   it('grades multi-select as an exact set, order-insensitive', () => {
     const q: Question = {
       type: 'multi_select',

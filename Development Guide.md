@@ -169,10 +169,17 @@ The same components serve both assessment kinds:
   `/courses/<course>/<chapter>/test/`) persists onto the **chapter** row and
   stamps `test_completed`.
 
-`grade.ts` is a **pure function** — `(questions, responses) → results +
-score` — kept free of DOM/DB imports so the subtle rules (effective option
-indices with all/none appended, exact-set multi-select, ungraded short/long
-answers, unanswered-counts-as-wrong) are unit-tested in `grade.test.ts`.
+`grade.ts` is a **pure function** — `(questions, responses, options) →
+results + score` — kept free of DOM/DB imports so the subtle rules (effective
+option indices with all/none appended, exact-set multi-select, ungraded
+short/long answers, unanswered-counts-as-wrong, multi-select partial credit)
+are unit-tested in `grade.test.ts`. The `partial_grades` site setting
+(astro.config.mjs → Vite define → `lib/assessment/config.ts`) flows in as
+`options.partialGrades`; with it on, `score.correct` can be fractional.
+
+Question prompts and flashcard fronts/backs are markdown: rendered at build
+time by `lib/content/markdown.ts` (same remark pipeline as lesson bodies,
+glossary refs included) into `*_html` fields beside the raw strings.
 
 ### Result endpoints & the profile
 

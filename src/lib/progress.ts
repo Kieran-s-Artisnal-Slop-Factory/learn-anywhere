@@ -104,3 +104,79 @@ async function maybeCompleteChapter(
     }
   }
 }
+
+/** Progress fields on a lesson row, back to their just-enrolled defaults. */
+function clearedLesson(lesson: Lessons): Lessons {
+  return {
+    ...lesson,
+    quiz_responses: null,
+    quiz_score: null,
+    started: null,
+    completed: null,
+  };
+}
+
+/** Progress fields on a chapter row (not its lessons — see resetChapter). */
+function clearedChapter(chapter: Chapters): Chapters {
+  return {
+    ...chapter,
+    test_responses: null,
+    test_score: null,
+    test_completed: null,
+    started: null,
+    completed: null,
+  };
+}
+
+/**
+ * Wipe all progress for a chapter: every lesson in it plus the chapter row
+ * itself (test answers/score included). Because a reset chapter can no longer
+ * be complete, its course is un-completed too, and current_chapter is cleared
+ * if it pointed here. Cached content is untouched — this only nulls progress.
+ */
+export async function resetChapterProgress(
+  courseSlug: string,
+  chapterSlug: string
+): Promise<void> {
+  const chapter = await get<Chapters>('chapters', chapterSlug);
+  if (!chapter) return;
+  for (const slug of chapter.lessons) {
+    const lesson = await get<Lessons>('lessons', slug);
+    if (lesson) await put<Lessons>('lessons', clearedLesson(lesson));
+  }
+  await put<Chapters>('chapters', clearedChapter(chapter));
+
+  const course = await get<Courses>('courses', courseSlug);
+  if (course && (course.completed || course.current_chapter === chapterSlug)) {
+    await put<Courses>('courses', {
+      ...course,
+      completed: null,
+      current_chapter: course.current_chapter === chapterSlug ? null : course.current_chapter,
+    });
+  }
+}
+
+/**
+ * Wipe all progress for a whole course: every chapter and lesson, plus the
+ * course row (started/completed/current_chapter). Leaves the visitor enrolled
+ * with the content still cached — just back to zero progress.
+ */
+export async function resetCourseProgress(courseSlug: string): Promise<void> {
+  const course = await get<Courses>('courses', courseSlug);
+  if (!course) return;
+  for (const chapterSlug of course.chapters) {
+    const chapter = await get<Chapters>('chapters', chapterSlug);
+    if (!chapter) continue;
+    for (const slug of chapter.lessons) {
+      const lesson = await get<Lessons>('lessons', slug);
+      if (lesson) await put<Lessons>('lessons', clearedLesson(lesson));
+    }
+    await put<Chapters>('chapters', clearedChapter(chapter));
+  }
+  await put<Courses>('courses', {
+    ...course,
+    current_chapter: null,
+    started: null,
+    completed: null,
+  });
+}

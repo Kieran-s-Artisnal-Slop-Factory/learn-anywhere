@@ -92,6 +92,11 @@ export interface QuestionResult {
   correct: boolean | null;
   /** Index of the right choice in the effective option list, where applicable. */
   expected: number | boolean | number[] | null;
+  /**
+   * Multi-select partial credit (0–1), present only when the site enables
+   * `partial_grades` and the answer was neither fully right nor worthless.
+   */
+  partial?: number;
 }
 
 /**

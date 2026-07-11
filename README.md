@@ -29,7 +29,8 @@ If you have any of the following requirements, you may be better off looking for
   - multiple choice (a–e), with per-question "All of the above" / "None of the
     above" toggles
   - true / false
-  - multi-select
+  - multi-select (all-or-nothing by default; a site-wide `partial_grades`
+    setting in `astro.config.mjs` enables partial credit)
   - short answer and long answer (stored/sent for review, never auto-graded
     and excluded from the score)
 - **Result endpoints** — a quiz or test can declare a `result_endpoint`;

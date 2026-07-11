@@ -15,6 +15,7 @@
    */
   import { onMount } from 'svelte';
   import { allAnswered, grade, percent, type GradeOutcome } from '../../lib/assessment/grade';
+  import { PARTIAL_GRADES } from '../../lib/assessment/config';
   import type { Question, QuestionResponse, Score } from '../../lib/assessment/types';
   import { postResults, type SubmissionMeta } from '../../lib/assessment/submit';
   import { getProfile, profileComplete, type Profile } from '../../lib/profile';
@@ -41,11 +42,13 @@
     meta?: SubmissionMeta | null;
   } = $props();
 
+  const gradeOptions = { partialGrades: PARTIAL_GRADES };
+
   let responses = $state<QuestionResponse[]>(
     initialResponses ? [...initialResponses] : questions.map(() => null)
   );
   let outcome = $state<GradeOutcome | null>(
-    initialResponses ? grade(questions, initialResponses) : null
+    initialResponses ? grade(questions, initialResponses, gradeOptions) : null
   );
   let triedIncomplete = $state(false);
 
@@ -86,7 +89,7 @@
       return;
     }
     const sent = $state.snapshot(responses) as QuestionResponse[];
-    const result = grade(questions, sent);
+    const result = grade(questions, sent, gradeOptions);
     outcome = result;
     // Local persistence first — completion must survive a failed send.
     await onSubmit(sent, result.score);

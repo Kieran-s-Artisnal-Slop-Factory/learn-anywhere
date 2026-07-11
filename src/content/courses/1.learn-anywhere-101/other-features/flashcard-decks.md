@@ -18,8 +18,8 @@ quiz:
       - When you close the tab
     answer: 1
   - type: true_false
-    prompt: Card fronts and backs support full markdown formatting.
-    answer: false
+    prompt: Card fronts and backs support markdown formatting, including glossary links.
+    answer: true
 ---
 
 The **Flashcards** entry in the navigation leads to practice decks — quick
@@ -41,7 +41,7 @@ scores live.
 
 ## Authoring a deck
 
-**One markdown file per deck** in `src/content/flashcards/`; cards are plain-text
+**One markdown file per deck** in `src/content/flashcards/`; cards are
 front/back pairs in [[frontmatter]], and the body is the deck's description:
 
 ```yaml
@@ -49,13 +49,14 @@ front/back pairs in [[frontmatter]], and the body is the deck's description:
 title: My Deck
 cards:
   - front: The question side
-    back: The answer side
-  - front: Another question
-    back: Another answer
+    back: The answer side, with **markdown** and `code` if you like
+  - front: What is a glossary link?
+    back: A hoverable definition, like [[frontmatter]] — they work in cards too
 ---
 Shown on the deck page — say which course this deck accompanies.
 ```
 
-Fronts and backs are plain text (no markdown, no glossary links); the
-description supports both. A deck needs at least one card — the build
-enforces it.
+Fronts and backs are markdown, same as question prompts — emphasis, inline
+code, and glossary references all render (to show the `[[...]]` syntax
+*literally* on a card, wrap it in backticks). The deck description supports
+the same. A deck needs at least one card — the build enforces it.

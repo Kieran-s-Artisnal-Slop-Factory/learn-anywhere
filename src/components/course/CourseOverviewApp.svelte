@@ -12,6 +12,7 @@
   import type { Chapters, Courses, Lessons } from '../../lib/db/types';
   import type { ChapterContent, CourseContent, LessonContent } from '../../lib/content/types';
   import { syncCourseBundle } from '../../lib/content/sync';
+  import { resetChapterProgress, resetCourseProgress } from '../../lib/progress';
   import { stripGlossaryRefs } from '../../lib/glossary/strip';
   import Card from '../Card.svelte';
   import {href as linkCorrector} from '../../lib/paths';
@@ -34,6 +35,36 @@
   const totalDone = $derived(
     bundle.lessons.filter((l) => lessonRows.get(l.slug)?.completed).length
   );
+  // Any progress at the course level worth a reset button.
+  const courseHasProgress = $derived(
+    courseRow?.started != null || courseRow?.completed != null || totalDone > 0
+  );
+
+  /** True when a chapter has any lesson/test progress to reset. */
+  function chapterHasProgress(chapter: ChapterContent): boolean {
+    const chapterRow = chapterRows.get(chapter.slug);
+    if (chapterRow?.started || chapterRow?.completed || chapterRow?.test_completed) return true;
+    return chapter.lessons.some((slug) => {
+      const l = lessonRows.get(slug);
+      return l?.started || l?.completed;
+    });
+  }
+
+  async function resetChapter(chapter: ChapterContent) {
+    if (!confirm(`Reset your progress for "${chapter.title}"? The content stays, but its lesson completion, quiz answers, and chapter test are cleared. This can't be undone.`)) {
+      return;
+    }
+    await resetChapterProgress(bundle.course.slug, chapter.slug);
+    await refresh();
+  }
+
+  async function resetCourse() {
+    if (!confirm(`Reset ALL your progress for "${bundle.course.title}"? Every chapter's completion, quiz answers, and test scores are cleared — you stay enrolled with the content cached. This can't be undone.`)) {
+      return;
+    }
+    await resetCourseProgress(bundle.course.slug);
+    await refresh();
+  }
 
   /**
    * Where "Continue" goes: the first incomplete lesson, preferring the
@@ -94,6 +125,13 @@
     await refresh();
   }
 
+  /** The enroll button: copy the course in, then jump straight into it. */
+  async function enrollAndStart() {
+    await enroll();
+    const firstLesson = bundle.chapters[0]?.lessons[0];
+    if (firstLesson) location.href = href(firstLesson);
+  }
+
   onMount(async () => {
     await refresh();
     // Already enrolled: keep the cached content fresh (hash check no-ops when
@@ -112,10 +150,11 @@
         <div>
           <p class="qa-title">Ready to start?</p>
           <p class="muted qa-sub">
-            Enrolling copies the course into your browser — no account, works offline.
+            Enrolling copies the course into your browser — no account, works offline — and
+            takes you straight to the first lesson.
           </p>
         </div>
-        <button class="btn btn-primary" onclick={enroll}>Enroll</button>
+        <button class="btn btn-primary" onclick={enrollAndStart}>Enroll and start →</button>
       </div>
     {:else if courseRow?.completed}
       <div class="quick-access banner banner-success">
@@ -208,8 +247,21 @@
             {/if}
           </div>
         {/if}
+        {#if enrolled && chapterHasProgress(chapter)}
+          <div class="reset-row">
+            <button class="btn btn-danger btn-sm" onclick={() => resetChapter(chapter)}>
+              Reset chapter progress
+            </button>
+          </div>
+        {/if}
       </Card>
     {/each}
+
+    {#if enrolled && courseHasProgress}
+      <div class="reset-row">
+        <button class="btn btn-danger btn-sm" onclick={resetCourse}>Reset course progress</button>
+      </div>
+    {/if}
   </div>
 {/if}
 
@@ -258,5 +310,11 @@
     padding-top: var(--space-3);
     border-top: 1px dashed var(--border-color);
     padding-left: var(--space-5);
+  }
+
+  .reset-row {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: var(--space-3);
   }
 </style>

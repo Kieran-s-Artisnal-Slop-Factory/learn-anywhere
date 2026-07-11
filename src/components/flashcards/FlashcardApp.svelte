@@ -11,6 +11,9 @@
   interface Card {
     front: string;
     back: string;
+    // Build-rendered markdown (see pages/flashcards/[deck].astro).
+    front_html?: string;
+    back_html?: string;
   }
 
   let { cards }: { cards: Card[] } = $props();
@@ -21,7 +24,7 @@
   let attempts = $state(0);
   let repeats = $state(0);
 
-  const total = cards.length;
+  const total = $derived(cards.length);
   const current = $derived(queue[0] ?? null);
   const done = $derived(queue.length === 0);
 
@@ -101,17 +104,34 @@
       {/if}
     </div>
 
-    <button
-      type="button"
+    <!-- A div-with-button-role rather than a real <button>: card text is
+         rendered markdown and may contain glossary links, which can't live
+         inside a button element. -->
+    <div
       class="card-face"
       class:revealed
-      onclick={flip}
+      role="button"
+      tabindex="0"
+      onclick={(e) => {
+        // Let links inside the card (e.g. glossary refs) act as links.
+        if (!(e.target as HTMLElement).closest('a')) flip();
+      }}
+      onkeydown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          flip();
+        }
+      }}
       aria-label={revealed ? 'Card back — press to show front' : 'Card front — press to reveal answer'}
     >
       <span class="side-label">{revealed ? 'Answer' : 'Prompt'}</span>
-      <span class="card-text">{revealed ? current.back : current.front}</span>
+      {#if revealed ? current.back_html : current.front_html}
+        <div class="card-text">{@html revealed ? current.back_html : current.front_html}</div>
+      {:else}
+        <span class="card-text">{revealed ? current.back : current.front}</span>
+      {/if}
       <span class="muted flip-hint">{revealed ? '' : 'Click or press Space to reveal'}</span>
-    </button>
+    </div>
 
     <div class="controls">
       {#if revealed}
@@ -176,6 +196,33 @@
     font-size: var(--font-size-lg);
     font-weight: 600;
     text-wrap: balance;
+  }
+
+  /* Rendered-markdown card text: keep injected elements compact. */
+  .card-text :global(p) {
+    margin: 0;
+  }
+
+  .card-text :global(p + p) {
+    margin-top: var(--space-2);
+  }
+
+  .card-text :global(pre) {
+    text-align: left;
+    padding: var(--space-2) var(--space-3);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    overflow-x: auto;
+    font-size: var(--font-size-sm);
+    font-weight: 400;
+  }
+
+  .card-text :global(ul),
+  .card-text :global(ol) {
+    text-align: left;
+    margin: var(--space-2) 0 0;
+    padding-left: var(--space-5);
+    font-weight: 400;
   }
 
   .flip-hint {

@@ -1,18 +1,23 @@
 ---
-// Course listing — static course facts; the island adds cached progress.
+// Course listing — static course facts plus each course's full bundle (so
+// the island can enroll right from the list); the island adds cached
+// progress and the per-course performance overview.
 import Layout from '../../layouts/Layout.astro';
 import CoursesApp from '../../components/apps/CoursesApp.svelte';
-import { loadCourseTrees } from '../../lib/content/bundle';
+import { loadCourseTrees, toBundle } from '../../lib/content/bundle';
 import { stripGlossaryRefs } from '../../lib/glossary/strip';
 
 const trees = await loadCourseTrees();
-const courses = trees.map((tree) => ({
-  slug: tree.course.id,
-  title: tree.course.data.title,
-  blurb: stripGlossaryRefs((tree.course.body ?? '').trim().split(/\n\s*\n/)[0] ?? ''),
-  chapterCount: tree.chapters.length,
-  lessonCount: tree.chapters.reduce((n, c) => n + c.lessons.length, 0),
-}));
+const courses = await Promise.all(
+  trees.map(async (tree) => ({
+    slug: tree.course.id,
+    title: tree.course.data.title,
+    blurb: stripGlossaryRefs((tree.course.body ?? '').trim().split(/\n\s*\n/)[0] ?? ''),
+    chapterCount: tree.chapters.length,
+    lessonCount: tree.chapters.reduce((n, c) => n + c.lessons.length, 0),
+    bundle: await toBundle(tree),
+  }))
+);
 ---
 
 <Layout title="Courses">

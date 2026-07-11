@@ -12,6 +12,7 @@
   import type { Chapters, Lessons } from '../../lib/db/types';
   import type { ChapterContent, CourseContent, LessonContent } from '../../lib/content/types';
   import { syncChapter, syncCourse, syncLesson } from '../../lib/content/sync';
+  import { resetChapterProgress } from '../../lib/progress';
   import Card from '../Card.svelte';
   import {href as linkCorrector} from '../../lib/paths';
 
@@ -41,11 +42,15 @@
   const testIsNext = $derived(
     !chapterRow?.completed && !continueLesson && hasTest && !chapterRow?.test_completed
   );
+  // Anything worth resetting — a started/completed chapter or any touched lesson.
+  const hasProgress = $derived(
+    chapterRow?.started != null ||
+      chapterRow?.completed != null ||
+      chapterRow?.test_completed != null ||
+      [...lessonRows.values()].some((l) => l.started || l.completed)
+  );
 
-  onMount(async () => {
-    await syncCourse($state.snapshot(course));
-    await syncChapter($state.snapshot(chapter));
-    for (const lesson of lessons) await syncLesson($state.snapshot(lesson));
+  async function loadRows() {
     chapterRow = (await get<Chapters>('chapters', chapter.slug)) ?? null;
     const loaded = new Map<string, Lessons>();
     for (const lesson of lessons) {
@@ -53,6 +58,21 @@
       if (row) loaded.set(lesson.slug, row);
     }
     lessonRows = loaded;
+  }
+
+  async function resetProgress() {
+    if (!confirm(`Reset your progress for "${chapter.title}"? This clears its lessons' completion and quiz answers, and the chapter test — the content stays. This can't be undone.`)) {
+      return;
+    }
+    await resetChapterProgress(course.slug, chapter.slug);
+    await loadRows();
+  }
+
+  onMount(async () => {
+    await syncCourse($state.snapshot(course));
+    await syncChapter($state.snapshot(chapter));
+    for (const lesson of lessons) await syncLesson($state.snapshot(lesson));
+    await loadRows();
     loading = false;
   });
 </script>
@@ -108,6 +128,12 @@
         </div>
       {/if}
     </Card>
+
+    {#if hasProgress}
+      <div class="reset-row">
+        <button class="btn btn-danger btn-sm" onclick={resetProgress}>Reset chapter progress</button>
+      </div>
+    {/if}
   </div>
 {/if}
 
@@ -143,5 +169,10 @@
     padding-top: var(--space-3);
     border-top: 1px dashed var(--border-color);
     padding-left: var(--space-5);
+  }
+
+  .reset-row {
+    display: flex;
+    justify-content: flex-end;
   }
 </style>

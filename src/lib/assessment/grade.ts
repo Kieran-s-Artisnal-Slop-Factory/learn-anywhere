@@ -16,7 +16,20 @@ export interface GradeOutcome {
   score: Score;
 }
 
-function gradeOne(question: Question, response: QuestionResponse): QuestionResult {
+export interface GradeOptions {
+  /**
+   * Multi-select partial credit (the site-wide `partial_grades` setting):
+   * each correct selection earns 1/total-correct, each wrong selection
+   * cancels one out, floored at zero for the question.
+   */
+  partialGrades?: boolean;
+}
+
+function gradeOne(
+  question: Question,
+  response: QuestionResponse,
+  options: GradeOptions
+): QuestionResult {
   switch (question.type) {
     case 'short_answer':
     case 'long_answer':
@@ -37,19 +50,37 @@ function gradeOne(question: Question, response: QuestionResponse): QuestionResul
       const got = Array.isArray(response) ? [...response].sort((a, b) => a - b) : null;
       const correct =
         got !== null && got.length === expected.length && got.every((v, i) => v === expected[i]);
+      if (options.partialGrades && !correct) {
+        const hits = got?.filter((v) => expected.includes(v)).length ?? 0;
+        const misses = (got?.length ?? 0) - hits;
+        const partial = Math.max(0, hits - misses) / expected.length;
+        return { correct, expected, partial };
+      }
       return { correct, expected };
     }
   }
 }
 
+/** A result's contribution to the score: 1, 0, or a partial fraction. */
+function points(result: QuestionResult): number {
+  if (result.correct === true) return 1;
+  return result.partial ?? 0;
+}
+
 /** Grade a full submission. Unanswered gradable questions count as wrong. */
-export function grade(questions: Question[], responses: QuestionResponse[]): GradeOutcome {
-  const results = questions.map((q, i) => gradeOne(q, responses[i] ?? null));
+export function grade(
+  questions: Question[],
+  responses: QuestionResponse[],
+  options: GradeOptions = {}
+): GradeOutcome {
+  const results = questions.map((q, i) => gradeOne(q, responses[i] ?? null, options));
   const gradable = results.filter((r) => r.correct !== null);
+  // Round away float noise from summed fractions (e.g. 1/3 + 1/3 + 1/3).
+  const correct = Math.round(gradable.reduce((sum, r) => sum + points(r), 0) * 100) / 100;
   return {
     results,
     score: {
-      correct: gradable.filter((r) => r.correct === true).length,
+      correct,
       gradable: gradable.length,
     },
   };

@@ -1,8 +1,8 @@
 ---
 title: Platform Terms
 cards:
-  - front: What does enrolling in a course actually do?
-    back: Copies the whole course into your browser's IndexedDB — no account, works offline afterwards.
+  - front: What does [[enrollment|enrolling]] in a course actually do?
+    back: Copies the whole course into your browser's [[indexeddb|IndexedDB]] — **no account**, works offline afterwards.
   - front: What makes a lesson an "exercise"?
     back: A quiz declared in its frontmatter. Lessons without one are readings.
   - front: When is a chapter with a test complete?

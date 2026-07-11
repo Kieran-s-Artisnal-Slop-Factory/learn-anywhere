@@ -3,6 +3,7 @@
 import { getCollection, render } from 'astro:content';
 import Layout from '../../layouts/Layout.astro';
 import FlashcardApp from '../../components/flashcards/FlashcardApp.svelte';
+import { renderMarkdownFragment } from '../../lib/content/markdown';
 import { href } from '../../lib/paths';
 
 export async function getStaticPaths() {
@@ -12,6 +13,15 @@ export async function getStaticPaths() {
 
 const { deck } = Astro.props;
 const { Content } = await render(deck);
+// Card fronts/backs are markdown (glossary refs included) — rendered at
+// build time, same pipeline as question prompts.
+const cards = await Promise.all(
+  deck.data.cards.map(async (card) => ({
+    ...card,
+    front_html: await renderMarkdownFragment(card.front),
+    back_html: await renderMarkdownFragment(card.back),
+  }))
+);
 ---
 
 <Layout title={deck.data.title}>
@@ -26,7 +36,7 @@ const { Content } = await render(deck);
     <Content />
   </div>
 
-  <FlashcardApp client:only="svelte" cards={deck.data.cards} />
+  <FlashcardApp client:only="svelte" {cards} />
 </Layout>
 
 <style>

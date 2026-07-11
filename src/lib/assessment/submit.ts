@@ -64,8 +64,14 @@ export function buildFormData(
     data.set(`q${n}_type`, q.type);
     data.set(`q${n}_prompt`, q.prompt);
     data.set(`q${n}_response`, responseText(q, responses[i] ?? null));
-    const correct = outcome.results[i]?.correct;
-    data.set(`q${n}_correct`, correct === null || correct === undefined ? 'ungraded' : String(correct));
+    const result = outcome.results[i];
+    const label =
+      result?.correct === null || result?.correct === undefined
+        ? 'ungraded'
+        : result.correct === false && (result.partial ?? 0) > 0
+          ? `partial:${result.partial}`
+          : String(result.correct);
+    data.set(`q${n}_correct`, label);
   });
   return data;
 }

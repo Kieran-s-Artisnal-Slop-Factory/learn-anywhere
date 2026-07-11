@@ -9,6 +9,8 @@
   import { percent } from '../../lib/assessment/grade';
   import { all } from '../../lib/db/repo';
   import type { Chapters, Courses, Lessons } from '../../lib/db/types';
+  import type { ChapterContent, CourseContent, LessonContent } from '../../lib/content/types';
+  import { syncCourseBundle } from '../../lib/content/sync';
   import Card from '../Card.svelte';
   import { href } from '../../lib/paths';
 
@@ -18,6 +20,11 @@
     blurb: string;
     chapterCount: number;
     lessonCount: number;
+    bundle: {
+      course: CourseContent;
+      chapters: ChapterContent[];
+      lessons: LessonContent[];
+    };
   }
 
   interface Performance {
@@ -35,16 +42,37 @@
 
   let rows: Courses[] = $state([]);
   let performance = $state<Map<string, Performance>>(new Map());
+  let allChapterRows = $state<Chapters[]>([]);
+  let enrolling = $state<string | null>(null);
 
   const rowFor = (slug: string) => rows.find((r) => r.id === slug);
 
-  onMount(async () => {
+  /**
+   * Where "Continue" goes: the first chapter (in course order) that isn't
+   * complete yet — i.e. the learner's first in-progress chapter in the list.
+   */
+  function continueHref(course: CourseCard): string {
+    const next = course.bundle.chapters.find(
+      (chapter) => !allChapterRows.find((r) => r.id === chapter.slug)?.completed
+    );
+    return href(next ? `/courses/${next.slug}/` : `/courses/${course.slug}/`);
+  }
+
+  async function enroll(course: CourseCard) {
+    enrolling = course.slug;
+    await syncCourseBundle($state.snapshot(course.bundle) as CourseCard['bundle']);
+    await refresh();
+    enrolling = null;
+  }
+
+  async function refresh() {
     const [courseRows, chapterRows, lessonRows] = await Promise.all([
       all<Courses>('courses'),
       all<Chapters>('chapters'),
       all<Lessons>('lessons'),
     ]);
     rows = courseRows;
+    allChapterRows = chapterRows;
 
     const perf = new Map<string, Performance>();
     for (const course of courseRows) {
@@ -83,7 +111,9 @@
       });
     }
     performance = perf;
-  });
+  }
+
+  onMount(refresh);
 </script>
 
 <div class="page-header">
@@ -133,9 +163,19 @@
         </div>
       {/if}
 
-      <a class="btn btn-primary" href={href(`/courses/${course.slug}/`)}>
-        {row?.started && !row?.completed ? 'Continue →' : 'View course →'}
-      </a>
+      <div class="row">
+        {#if !row}
+          <button class="btn btn-primary" onclick={() => enroll(course)} disabled={enrolling === course.slug}>
+            {enrolling === course.slug ? 'Enrolling…' : 'Enroll'}
+          </button>
+          <a class="btn" href={href(`/courses/${course.slug}/`)}>View course →</a>
+        {:else if !row.completed}
+          <a class="btn btn-primary" href={continueHref(course)}>Continue →</a>
+          <a class="btn" href={href(`/courses/${course.slug}/`)}>View course →</a>
+        {:else}
+          <a class="btn btn-primary" href={href(`/courses/${course.slug}/`)}>View course →</a>
+        {/if}
+      </div>
     </Card>
   {:else}
     <p class="muted">No courses have been authored yet.</p>
