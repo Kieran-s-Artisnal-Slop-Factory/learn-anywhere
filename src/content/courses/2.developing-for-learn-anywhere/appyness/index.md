@@ -1,26 +1,9 @@
 ---
-title: Development
+title: Appyness
 lessons:
-  - architecture-overview
   - offline-first
   - service-workers-and-pwa
 test:
-  - type: multiple_choice
-    prompt: What does `npm run build` produce?
-    options:
-      - A Docker image
-      - A dist/ folder of static files
-      - A Node server bundle
-      - A database migration
-    answer: 1
-  - type: multiple_choice
-    prompt: What renders the interactive parts of a page?
-    options:
-      - Server-side endpoints
-      - Svelte islands mounted into static HTML
-      - A single-page React app
-      - Inline jQuery
-    answer: 1
   - type: multiple_choice
     prompt: When content changes, how does an enrolled browser find out?
     options:
@@ -52,5 +35,4 @@ test:
     prompt: Explain the trade-offs of the offline-first, no-backend design in your own words.
 ---
 
-The developer's exit exam — architecture, the offline data flow, and the
-service worker. If you can pass this, you can navigate the codebase.
+How the offline data flow, and the service worker function. What makes the site feel more like an app than a webpage. 
