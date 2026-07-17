@@ -1,11 +1,17 @@
 # Coding Exams — Implementation Plan
 
-Adds three new **code-based exercise kinds** alongside the existing quiz/test
+Adds two new **code-based exercise kinds** alongside the existing quiz/test
 system: **database** (SQL against an in-browser engine, ported from
-lite-learner), **web preview** (HTML/CSS/JS-or-TS with a live preview), and
-**pure code** (WASM language runtimes evaluated in a terminal). Each kind can
-appear as a lesson exercise *or* a chapter test, brings a playground, and
-respects the platform's constraints: fully static, offline-first, no backend.
+lite-learner) and **web preview** (HTML/CSS/JS-or-TS with a live preview).
+Each kind can appear as a lesson exercise *or* a chapter test, brings a
+playground, and respects the platform's constraints: fully static,
+offline-first, no backend.
+
+A third kind — **pure code** (arbitrary-language WASM runtimes evaluated in a
+terminal) — is deliberately **deferred** to a later extension: it carries the
+most caveats (runtime sourcing, large assets, honest language limits). Its
+full design notes and phases live in `general-code-exams-plan.md`; the
+foundation below reserves room for it so it stays additive.
 
 This is a plan only — nothing here is implemented. Phases are ordered so each
 one ends with something runnable and testable.
@@ -51,19 +57,20 @@ current shape — existing content is untouched.
 quiz:      [...]                 # existing
 database:  { runtime: sqlite, initial_sql: ..., desired_state: ... }
 web:       { starter: { html: ..., css: ..., js: ... } }   # or ts:
-code:      { runtime: python, starter: ..., evaluation: ... }
 
 # Chapter variants (same rule; `test:` keeps its current questions-array shape)
 test:           [...]            # existing
 test_database:  { ... }          # same object shapes as the lesson blocks
 test_web:       { ... }
-test_code:      { ... }
 ```
 
-Derived kinds: `reading | exercise | database | web | code` (lessons) and the
-test analogs on chapters. `LessonContent`/`ChapterContent` payloads carry the
-block; `content_hash` covers it automatically (it hashes raw frontmatter), so
-re-authoring an exercise refreshes caches without touching progress.
+Derived kinds: `reading | exercise | database | web` (lessons) and the test
+analogs on chapters. The `code:` / `test_code:` keys are **reserved** for the
+pure-code extension (`general-code-exams-plan.md`) — the "at most one"
+refinement is written to accept them later without reshaping anything.
+`LessonContent`/`ChapterContent` payloads carry the block; `content_hash`
+covers it automatically (it hashes raw frontmatter), so re-authoring an
+exercise refreshes caches without touching progress.
 
 ### 2.2 Runtime registry + dependency gating
 
@@ -75,7 +82,7 @@ dependencies installed."
   ```js
   // Which code runtimes this site ships. Each entry needs its npm package
   // installed (see docs/user/runtimes.md). Empty = no code exercises.
-  const runtimes = []; // e.g. ['sqlite', 'web', 'python']
+  const runtimes = []; // e.g. ['sqlite', 'web']
   ```
 
   Exposed via Vite define as `PUBLIC_RUNTIMES` (JSON array), read by
@@ -87,7 +94,7 @@ dependencies installed."
   opt-in installs (documented per runtime), NOT in the base `package.json`.
 
 - **Build-time validation** (in `lib/content/bundle.ts`, where wiring is
-  already validated): any lesson/chapter using `database|web|code` whose
+  already validated): any lesson/chapter using `database|web` whose
   `runtime` is not in `PUBLIC_RUNTIMES` **fails the build** with a message
   naming the file, the runtime, and the install command. This is the same
   fail-fast philosophy as orphaned lessons and unknown glossary terms.
@@ -105,94 +112,38 @@ ruby.wasm, …) are additive:
 ```ts
 // lib/runtimes/types.ts (sketch)
 export interface RuntimeAdapter {
-  id: string;                      // 'sqlite' | 'python' | ...
-  label: string;                   // 'SQLite', 'Python 3.12 (Pyodide)'
-  kind: 'database' | 'code';       // 'web' is a singleton, not an adapter
+  id: string;                      // 'sqlite' | (later: 'pglite', ...)
+  label: string;                   // 'SQLite'
+  kind: 'database';                // 'web' is a singleton, not an adapter;
+                                   // the extension adds 'code'
   editorLanguage(): Promise<LanguageSupport>;   // CodeMirror lang package
-  createSession(): Promise<RuntimeSession>;     // usually wraps a Worker
-  precacheAssets?(): string[];     // extra URLs for precache.json (e.g. pyodide files)
+  createSession(): Promise<DatabaseSession>;    // usually wraps a Worker
+  precacheAssets?(): string[];     // extra URLs for precache.json
 }
 
-export interface RuntimeSession {
-  // The process model: mount files, run, get streams + an exit code.
-  run(files: Record<string, string>, argv?: string[]): Promise<RunResult>;
+export interface DatabaseSession {
+  // lite-learner's worker protocol, verbatim:
   reset(): Promise<void>;
+  exec(sql: string): Promise<Row[]>;
+  validate(sql: string): Promise<void>;
+  listTables(): Promise<string[]>;
+  tableData(name: string): Promise<TableData>;
+  dump(includeData: boolean): Promise<string>;
   destroy(): void;
-  // database-kind extras (lite-learner protocol): exec/validate/listTables/
-  // tableData/dump — expressed as an optional DatabaseSession sub-interface.
-}
-
-export interface RunResult {
-  exitCode: number;                // non-zero = failure (the base contract)
-  stdout: string;                  // streamed to the terminal as it arrives
-  stderr: string;
 }
 ```
 
-### 2.3b The process model: WASI first, WebContainers rejected
+The pure-code extension (`general-code-exams-plan.md`) widens this with a
+generic process-model session (`run(files, argv) → { exitCode, stdout,
+stderr }`, WASI-based) and the exit-code/TAP evaluation tiers — designed now
+so nothing in this interface blocks it, built later.
 
-The pure-code kind is built on a **process abstraction**: mount the learner's
-source (plus author test files) into a virtual filesystem, spawn, pipe
-stdout/stderr to the terminal, and read the **exit code** — non-zero fails.
+### 2.4 Storage (IndexedDB)
 
-- **WASI** (the WebAssembly System Interface — an actual spec) delivers
-  exactly this: argv, env, virtual FS, stdio, exit code. Interpreters compiled
-  to `wasm32-wasi` exist for Python (CPython-WASI), JS (QuickJS), Lua, Ruby,
-  PHP. They run in a plain Web Worker via a small MIT shim
-  (`@bjorn3/browser_wasi_shim`) — **no SharedArrayBuffer, no COOP/COEP
-  headers, fully offline** once assets are cached.
-- Consequence for extensibility: alongside bespoke adapters, ship a **generic
-  WASI adapter** where a runtime is *configuration, not code* — a `.wasm` URL
-  + an invocation template (`python /work/main.py`). Adding many runtimes
-  becomes "drop in a binary and a registry entry."
-- **WebContainers (StackBlitz) — evaluated and rejected** for the core:
-  it has the perfect process API (`spawn` → output stream + exit promise) but
-  (a) it's a **Node-only** micro-OS — no Python/Go/Rust, so it only covers the
-  languages a plain worker already handles; (b) it's **proprietary with a
-  commercial license**, wrong for a fork-and-deploy-anywhere platform;
-  (c) it **requires COOP/COEP** (SharedArrayBuffer), which many static hosts
-  (GitHub Pages) cannot set and which this project deliberately avoids;
-  (d) boot + npm installs want the network, weakening offline-first. It could
-  become an optional adapter later for Node-ecosystem exercises on sites that
-  accept those trade-offs, but nothing in the core may depend on it.
-- Compiled languages (Go/Rust/C) are unchanged by any of this: WASI runs
-  compiled artifacts; the *compilers* still don't practically run in-browser.
-
-### 2.4 Language-agnostic unit-test evaluation: exit codes, then TAP
-
-Two evaluation tiers, both language-agnostic because they ride on the process
-model:
-
-1. **Exit code** (the base tier): run user code + author tests as a process;
-   exit 0 = pass, non-zero = fail. Zero per-language machinery — any test
-   framework in any language already behaves this way. Score: 1/1.
-2. **TAP** (the granular tier): parse the **Test Anything Protocol** from
-   stdout for a per-test n/m score — plain text, trivially emitted from any
-   language, parsed once in `lib/runtimes/tap.ts`:
-
-```
-1..3
-ok 1 - add() handles positives
-not ok 2 - add() handles negatives
-ok 3 - add() handles zero
-```
-
-- Authors write test code *in the exercise's language*; each adapter ships a
-  tiny TAP shim (Python: ~20-line helper prepended to test code; JS: same).
-- The parser maps results straight onto the existing `Score`
-  (`correct/gradable`) and per-question-style pass/fail rows, so the score UI,
-  course overview aggregation, and `result_endpoint` submissions all work
-  unchanged.
-- Alternative `evaluation.mode: output` (normalized stdout comparison) covers
-  "print the right thing" exercises without test code.
-
-### 2.5 Storage (IndexedDB)
-
-- New progress fields on `Lessons` (mirrored as `test_*` on `Chapters`):
+- New progress field on `Lessons` (mirrored as `test_solution` on `Chapters`):
   - `solution: string | Record<string,string> | null` — the editor buffer(s):
-    SQL string (database), `{ html, css, js|ts }` (web), source string (code).
-  - `solution_score: Score | null` — TAP/output results (code kind only;
-    database is pass/fail via `completed`).
+    SQL string (database), `{ html, css, js|ts }` (web). (The extension adds
+    a source-string variant plus `solution_score` for graded code runs.)
   - Row fields on schemaless IDB need **no migration**; `sync.ts` just gains
     defaults, and backup export/import covers them automatically.
 - **Migration v2**: add the `playground` store (lite-learner's v3, adapted) —
@@ -202,7 +153,7 @@ ok 3 - add() handles zero
   auto-executed** (a stored buffer can't reproduce accumulated engine state; a
   banner tells the learner to re-run).
 
-### 2.6 Playground shell
+### 2.5 Playground shell
 
 `/playground/` page (restoring the navbar slot lite-learner had):
 
@@ -214,33 +165,30 @@ ok 3 - add() handles zero
 - Requirement 4 ("switch between them if multiple languages are installed") is
   satisfied here.
 
-### 2.7 Offline / PWA
+### 2.6 Offline / PWA
 
 - Editor + engine JS chunks land in `/_astro/` and are picked up by the
-  service worker's existing crawl.
-- Multi-file runtimes (Pyodide is ~10–200 MB depending on packages) expose
-  `precacheAssets()`; `precache.json.ts` appends them. **Open decision** (see
-  §8): precaching huge runtimes should likely be opt-in per site
-  (`precacheRuntimes: boolean` config) to avoid blowing up first-visit cost.
+  service worker's existing crawl. SQLite-WASM (~1 MB) precaches without
+  ceremony; the `precacheAssets()` adapter hook exists for engines with
+  extra files (pglite later, heavy code runtimes in the extension).
 - Like lite-learner, database engines stay **in-memory only** (no OPFS) so no
   COOP/COEP headers are required and any static host works.
 
-### 2.8 Completion & scoring semantics
+### 2.7 Completion & scoring semantics
 
-| Kind      | Completes when…                            | Score shown              |
-| --------- | ------------------------------------------ | ------------------------ |
-| quiz/test | submitted (any score) — unchanged          | `correct/gradable`       |
-| database  | solution check passes (lite-learner rule)  | pass/fail                |
-| web       | learner presses "Submit work" (no eval)    | none                     |
-| code      | submitted test run (score recorded)        | TAP `pass/total` as Score |
+| Kind      | Completes when…                            | Score shown        |
+| --------- | ------------------------------------------ | ------------------ |
+| quiz/test | submitted (any score) — unchanged          | `correct/gradable` |
+| database  | solution check passes (lite-learner rule)  | pass/fail          |
+| web       | learner presses "Submit work" (no eval)    | none               |
 
-`result_endpoint` extends naturally: code/database/web submissions POST the
-solution text alongside the score — slots into the existing form-data format
-as `solution_*` fields (Phase 2 of each type).
+`result_endpoint` extends naturally: database/web submissions POST the
+solution text alongside the outcome — slots into the existing form-data
+format as `solution_*` fields (Phase 2 of each type).
 
 ---
 
-## 3. Phase 0 — Foundation (prerequisite for all three types)
+## 3. Phase 0 — Foundation (prerequisite for both types)
 
 Small but load-bearing; ships alongside Database Phase 1 if preferred, but has
 its own exit criteria.
@@ -248,14 +196,14 @@ its own exit criteria.
 **Tasks**
 
 1. `lib/runtimes/`: `types.ts` (adapter interface), `config.ts`
-   (`PUBLIC_RUNTIMES`), `registry.ts` (empty registry), `tap.ts` (parser +
-   unit tests — pure, vitest).
+   (`PUBLIC_RUNTIMES`), `registry.ts` (empty registry).
 2. `astro.config.mjs`: `runtimes` const + define; `scripts/check-runtimes.mjs`
    preflight.
-3. Schema plumbing: zod blocks for `database`/`web`/`code` (+ chapter
-   `test_*` variants) with the "at most one assessment" refinement; derived
-   kinds through `content.config.ts` → `bundle.ts` → `content/types.ts` →
-   `sync.ts` → `db/types.ts`; build-time "runtime not enabled" validation.
+3. Schema plumbing: zod blocks for `database`/`web` (+ chapter `test_*`
+   variants) with the "at most one assessment" refinement (written to accept
+   the future `code:` keys); derived kinds through `content.config.ts` →
+   `bundle.ts` → `content/types.ts` → `sync.ts` → `db/types.ts`; build-time
+   "runtime not enabled" validation.
 4. Migration v2 (`playground` store) + `lib/playground.ts` (per-runtime keyed,
    adapted from lite-learner).
 5. `/playground/` shell page + switcher island (renders "no runtimes enabled"
@@ -275,7 +223,7 @@ its own exit criteria.
   quizzes/tests/readings behave identically (regression pass).
 - A lesson using `database:` with `runtimes: []` fails the build with the
   friendly message.
-- TAP parser unit tests pass; playground page renders its empty state.
+- Playground page renders its empty state.
 
 ---
 
@@ -428,104 +376,18 @@ survives reload, submitting completes the lesson.
 
 ---
 
-## 6. Type 3 — Pure code (WASM runtimes + terminal)
+## 6. Extension — pure code (deferred, planned separately)
 
-### Phase 1: initial implementation
-
-Goal: the **generic WASI adapter** (see §2.3b) running one real interpreter —
-**CPython-WASI** — behind the process model: mount files, spawn, stream
-stdout/stderr to the terminal, evaluate by exit code. A second WASI runtime
-(QuickJS or Lua) added by *configuration only*, to prove the
-runtime-as-data claim before Phase 2. Pyodide (package ecosystem, micropip)
-is deliberately deferred to Phase 2 as a bespoke adapter behind the same
-interface — Phase 1 stands on stdlib-only Python.
-
-**Schema**
-
-```yaml
-code:
-  runtime: python
-  starter: |
-    def add(a, b):
-        ...
-  evaluation:
-    mode: tests              # tests (exit code + optional TAP) | output
-    tests: |                 # mounted as /work/test.py, run after user code;
-      from main import add   # exit 0 = pass; TAP on stdout = per-test score
-      assert_eq("add() handles positives", add(1, 2), 3)
-      assert_eq("add() handles negatives", add(-1, -2), -3)
-    # mode: output alternative:
-    # expected_output: "hello\n"     (normalized: trailing whitespace, CRLF)
-```
-
-**Build**
-
-- `lib/runtimes/wasi/`: the **generic WASI adapter** — a Web Worker hosting
-  `@bjorn3/browser_wasi_shim` (runaway user code must never freeze the tab;
-  terminate + respawn on timeout). Runtimes are registry *entries*, not code:
-  `{ id, label, wasmUrl, argv: ['python', '/work/main.py'], testArgv,
-  editorLanguage, tapShim }`. Phase 1 ships the CPython-WASI entry plus one
-  more (QuickJS or Lua) to prove entries generalize.
-- Evaluation tiers per §2.4: **exit code** is the base (test process exits
-  non-zero ⇒ fail); when stdout parses as TAP, the per-test n/m score is used
-  instead. Author test code is mounted as its own file next to the user's.
-- TAP shim per runtime (`assert_eq`, `assert_true`, `test(name, fn)` — a few
-  helpers prepended to the author's test file) → stdout → `tap.ts` parser
-  → `Score`.
-- `components/exercise/CodeExercise.svelte`: `CodeEditor`
-  (`@codemirror/lang-python` etc. via the registry entry) + terminal panel —
-  **xterm.js** (`@xterm/xterm`), write-only in Phase 1 (program output, not
-  interactive stdin).
-- Run = execute user code alone, stream output + exit status. **Check** = run
-  the test process, show per-test pass/fail list when TAP is present (reusing
-  the QuestionCard-style ✓/✗ rows) or a single pass/fail from the exit code,
-  record `solution_score`, complete on submit.
-- Chapter test variant via `test_code`.
-- Runtime config surface (requirement 3): everything runtime-specific
-  (wasm asset, argv templates, shim, editor language, precache list) lives in
-  its registry entry; bespoke adapters (Pyodide, Phase 2) implement the same
-  `RuntimeAdapter` interface when a wasm binary + argv isn't enough.
-
-**Dependencies** (opt-in): `@bjorn3/browser_wasi_shim`, `@xterm/xterm`,
-`@codemirror/lang-python` (+ interpreter `.wasm` assets, vendored or
-downloaded into `public/runtimes/` by a documented script — decide at P1).
-
-**Exit criteria**: author the YAML, run Python, see prints and the exit
-status in the terminal, Check shows 2/2 tests green and completes the lesson;
-a second runtime works by adding one registry entry and changing one
-frontmatter line; disabled runtime fails the build.
-
-### Phase 2: polish
-
-- Code **playground** tabs: one per installed code runtime (buffer + last
-  output persisted per runtime id).
-- Terminal polish: ANSI colors, clear button, execution-time/exit-status
-  line, configurable timeout with friendly "killed after Ns" messaging.
-- **Pyodide as the first bespoke adapter** (same `RuntimeAdapter` interface):
-  for courses that need the package ecosystem (`packages: [numpy]` via
-  micropip) — proves bespoke and WASI-generic runtimes coexist. Asset
-  strategy: `precacheAssets()` + the `precacheRuntimes` config decision
-  (see §8); loading indicator with progress (first boot is seconds even warm).
-- `result_endpoint`: source + TAP/exit-code results.
-- Honest runtime matrix in docs: Python/JS/TS/Lua/Ruby/PHP are practical
-  in-browser; **Go/Rust/C are not** (they need a compile step no static,
-  offline site can provide) — the adapter interface doesn't forbid them, but
-  the docs must set expectations that those require a hosted compiler service
-  and therefore break the offline story.
-
-### Phase 3: document
-
-- `docs/user/code-exercises.md`: schema, all evaluation modes (exit code /
-  TAP / output), the TAP shim helpers per shipped runtime, runtime matrix +
-  install commands, playground.
-- `docs/dev/code-runtimes.md`: adapter interface + registry-entry reference,
-  worker protocol, WASI shim architecture, TAP contract, sequence diagrams
-  (run; check → test process → exit code/TAP → Score), and the centerpiece:
-  **"Adding a runtime" walkthrough**, two tiers —
-  (a) *zero-code*: add a WASI registry entry (Lua-WASI as the worked example:
-  wasm URL, argv template, TAP shim, preflight mapping, test checklist);
-  (b) *bespoke*: implement `RuntimeAdapter` for engines that aren't plain
-  WASI commands (Pyodide as the worked example).
+The third kind — arbitrary-language exercises via WASM runtimes with a
+terminal emulator — is fully planned in **`general-code-exams-plan.md`** as
+an extension phase to pick up after this plan ships. Headlines, so this
+document stands alone: process-model abstraction (mount files → run → exit
+code), WASI-first with a generic runtime-as-configuration adapter,
+WebContainers evaluated and rejected (Node-only, proprietary license,
+COOP/COEP requirement), exit-code + TAP evaluation tiers, xterm.js terminal,
+honest limits on compiled languages. This plan's only obligations toward it:
+keep the `code:`/`test_code:` frontmatter keys reserved and don't let the
+adapter interface assume database-only.
 
 ---
 
@@ -536,7 +398,7 @@ frontmatter line; disabled runtime fails the build.
 | 0    | Foundation  | Everything else hangs off it; small; provably non-breaking |
 | 1    | Database P1 → P2 → P3 | Reference implementation exists; de-risks the adapter/registry/playground design against real code |
 | 2    | Web P1 → P2 → P3 | No evaluation engine — pure UI; exercises the multi-buffer storage + export paths |
-| 3    | Pure code P1 → P2 → P3 | Hardest (workers, TAP, big assets); benefits from everything learned |
+| —    | Pure code extension | Separate, later effort — see `general-code-exams-plan.md` |
 
 Each type's P1 is a review checkpoint: play with it, confirm the schema and
 storage feel right, *then* invest in polish. Schema changes after P1 are
@@ -546,66 +408,52 @@ cheap (content_hash refreshes caches; progress fields are additive).
 
 ## 8. Open questions (decide during Phase 0 / at each P1 review)
 
-1. **Precaching heavy runtimes** — `precacheRuntimes: true|false` site config,
-   or per-runtime? Pyodide can be 10s of MB; SQLite-WASM is ~1 MB (always
-   fine). Leaning: config flag, default off for adapters that declare
-   themselves "heavy", always-on for light ones.
-2. **Database completion strictness** — lite-learner completes only on a
+1. **Database completion strictness** — lite-learner completes only on a
    passing check; quizzes complete on any submission. Keep the split per the
-   table in §2.8, or unify? Leaning: keep — "make the DB match" has an
+   table in §2.7, or unify? Leaning: keep — "make the DB match" has an
    objective bar; quizzes are formative.
-3. **Playground for `web` and code runtimes on the same page** — one switcher
-   with heavy lazy-loading per tab (leaning yes: only instantiate a runtime
-   when its tab activates, destroy on switch-away).
-4. **`test` filename collision** — chapter test pages already reserve the
+2. **Playground tabs on one page** — one switcher with heavy lazy-loading per
+   tab (leaning yes: only instantiate a runtime when its tab activates,
+   destroy on switch-away).
+3. **`test` filename collision** — chapter test pages already reserve the
    `test` lesson name; no new reserved names needed (test variants live in
    chapter frontmatter), but confirm `test_database` etc. don't complicate the
    `test.astro` static-path generation (they shouldn't: one test page per
    chapter regardless of kind).
-5. **Score semantics for `output` / exit-code modes** — pass/fail (1/1) or
-   excluded from score aggregation? Leaning: 1/1.
-6. **Interactive stdin** in the terminal (Phase 2+ of pure code) —
-   synchronous stdin from a worker needs SharedArrayBuffer (COOP/COEP), which
-   we deliberately avoid. Defer; document as a known limitation.
-7. **Where interpreter `.wasm` binaries live** — vendored into
-   `public/runtimes/` by a documented fetch script (pinned versions, offline
-   builds, repo stays slim) vs committed to the repo vs npm packages where
-   they exist. Leaning: fetch script with pinned URLs + checksums.
-8. **Python runtime identity** — is `runtime: python` CPython-WASI, with
-   Pyodide as a separate `runtime: pyodide` (package ecosystem), or one
-   `python` id whose backing engine is a site-level choice? Leaning: separate
-   ids; explicit beats magic and courses declare what they actually need.
+
+(Pure-code questions — heavy-runtime precaching, exit-code score semantics,
+stdin, wasm vendoring, Python runtime identity — moved to
+`general-code-exams-plan.md` §6.)
 
 ---
 
 ## 9. Deliverables map
 
 ```
-astro.config.mjs                      runtimes const (+ precacheRuntimes)
+astro.config.mjs                      runtimes const
 scripts/check-runtimes.mjs            dependency preflight
 src/lib/runtimes/
-  types.ts  config.ts  registry.ts  tap.ts (+ tap.test.ts)
+  types.ts  config.ts  registry.ts
   sqlite/   (worker, client, protocol, comparator + tests, adapter)
-  wasi/     (generic adapter: worker + WASI shim host; registry entries
-             for cpython, quickjs/lua — entries are data + a TAP shim each)
-  pyodide/  (Phase 2 bespoke adapter, package ecosystem)
-public/runtimes/                      vendored interpreter .wasm binaries
-                                      (fetched by a pinned-version script)
 src/lib/playground.ts                 per-runtime persistence (migration v2)
 src/lib/editorTheme.ts                editor scheme pin (restored)
 src/components/editor/CodeEditor.svelte
 src/components/exercise/
   DatabaseExercise.svelte  SqlEditor.svelte  DbViewer.svelte
-  WebExercise.svelte  CodeExercise.svelte
+  WebExercise.svelte
 src/components/playground/            shell + per-kind playground islands
 src/pages/playground.astro
 docs/user/
   runtimes.md                         enabling runtimes + install commands
-  database-exercises.md  web-exercises.md  code-exercises.md
+  database-exercises.md  web-exercises.md
 docs/dev/
-  database-runtime.md  web-runtime.md  code-runtimes.md   (each with
-                                       sequence diagrams + code references)
+  database-runtime.md  web-runtime.md   (each with sequence diagrams +
+                                         code references)
 ```
+
+(The pure-code extension adds `lib/runtimes/tap.ts`, `wasi/`, `pyodide/`,
+`public/runtimes/`, `CodeExercise.svelte`, and the code docs — see
+`general-code-exams-plan.md` §7.)
 
 Existing docs to touch as each type lands: `Course Development Guide.md`
 (pointer sections to `docs/user/*`), `Development Guide.md` (architecture
