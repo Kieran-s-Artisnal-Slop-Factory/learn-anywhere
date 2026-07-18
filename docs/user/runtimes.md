@@ -18,10 +18,10 @@ export const runtimes = ['sqlite'];
 
 **2. Install its packages:**
 
-| Runtime  | What it powers                        | Install                                                  |
-| -------- | ------------------------------------- | -------------------------------------------------------- |
-| `sqlite` | Database exercises (SQL, in-browser)  | `npm install @sqlite.org/sqlite-wasm @codemirror/lang-sql` |
-| `web`    | Web-preview exercises (HTML/CSS/JS)   | *(not implemented yet — see coding-exams-plan.md)*       |
+| Runtime  | What it powers                                   | Install |
+| -------- | ------------------------------------------------ | ------- |
+| `sqlite` | [Database exercises](database-exercises.md) (SQL, in-browser) | `npm install @sqlite.org/sqlite-wasm @codemirror/lang-sql` |
+| `web`    | [Web-preview exercises](web-exercises.md) (HTML/CSS/JS-or-TS) | `npm install @codemirror/lang-html @codemirror/lang-css @codemirror/lang-javascript @emmetio/codemirror6-plugin sucrase fflate modern-screenshot` |
 
 You don't have to memorize the packages: `npm run dev` and `npm run build`
 **preflight-check** every enabled runtime and print the exact

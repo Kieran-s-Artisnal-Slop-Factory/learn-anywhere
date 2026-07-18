@@ -211,12 +211,17 @@ first shipped kind is **database exercises** — SQL against SQLite-WASM in a
 Web Worker, with lite-learner's state-comparison checking, a DB viewer, and
 a playground with snapshot persistence and exports.
 
-Full implementation guide (plumbing, worker protocol, sequence diagrams,
-and the pglite extension walkthrough):
-**[docs/dev/database-runtime.md](docs/dev/database-runtime.md)**. Authoring:
-**[docs/user/database-exercises.md](docs/user/database-exercises.md)** +
-**[docs/user/runtimes.md](docs/user/runtimes.md)**. Roadmap for the web and
-pure-code kinds: `coding-exams-plan.md` / `general-code-exams-plan.md`.
+The second kind is **web exercises** — HTML/CSS/JS-or-TS tabs with a
+sandboxed live preview (srcdoc iframe), console capture, Sucrase type
+stripping, Emmet, zip/screenshot exports, and a playground tab.
+
+Implementation guides (plumbing, protocols, sequence diagrams, extension
+walkthroughs): **[docs/dev/database-runtime.md](docs/dev/database-runtime.md)**
+and **[docs/dev/web-runtime.md](docs/dev/web-runtime.md)**. Authoring:
+**[docs/user/database-exercises.md](docs/user/database-exercises.md)**,
+**[docs/user/web-exercises.md](docs/user/web-exercises.md)**, and
+**[docs/user/runtimes.md](docs/user/runtimes.md)**. Roadmap for the deferred
+pure-code kind: `general-code-exams-plan.md`.
 
 ## Progress model
 

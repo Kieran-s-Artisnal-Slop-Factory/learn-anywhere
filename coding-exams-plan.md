@@ -416,6 +416,15 @@ survives reload, submitting completes the lesson.
 
 ### Phase 3: document
 
+> **Status: ✅ complete.** Shipped `docs/user/web-exercises.md` (schema,
+> TS caveats, learner-facing features, sandbox/export limits,
+> result_endpoint payload) and `docs/dev/web-runtime.md` (srcdoc assembly +
+> sandboxing rationale, Sucrase pipeline, console-capture design, temp-
+> iframe screenshot approach, two mermaid sequence diagrams, known
+> limitations). runtimes.md web row, both guides, and the README updated.
+> **Type 2 — Web preview is fully done — and with it the whole main plan.**
+> Remaining work lives in `general-code-exams-plan.md` (deferred).
+
 - `docs/user/web-exercises.md`: schema, lang: js|ts, Emmet cheatsheet
   pointer, what the sandbox allows/blocks, export features, playground.
 - `docs/dev/web-runtime.md`: srcdoc assembly + sandboxing rationale, Sucrase

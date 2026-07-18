@@ -47,6 +47,10 @@ If you have any of the following requirements, you may be better off looking for
   (not answer matching), plus a persistent playground with exports. Opt-in
   per site — see [docs/user/runtimes.md](docs/user/runtimes.md) and
   [docs/user/database-exercises.md](docs/user/database-exercises.md)
+- **Web exercises** — HTML/CSS/JS-or-TypeScript editor tabs with a live
+  sandboxed preview, Emmet, console capture, and zip/screenshot exports;
+  submitted rather than graded. See
+  [docs/user/web-exercises.md](docs/user/web-exercises.md)
 - **Flashcards** — authored decks of front/back cards with a shuffle-and-repeat
   practice mode (missed cards recycle until learned)
 - **Glossary** — one markdown file per term with a short popup description and

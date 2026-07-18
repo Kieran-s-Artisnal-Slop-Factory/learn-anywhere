@@ -260,6 +260,18 @@ Enabling the runtime (one config line + one install) is covered in
 **[docs/user/runtimes.md](docs/user/runtimes.md)**; a reference course ships
 in `src/content/courses/9.sql-demo/`.
 
+## Web exercises
+
+Lessons and chapter tests can also be **web workspaces**: HTML / CSS /
+JS-or-TypeScript editor tabs with a live page preview, Emmet, a console
+strip, and zip/screenshot exports. Declare `web:` on a lesson or
+`test_web:` on a chapter (with `instructions`). There's no auto-grading —
+learners build and press *Submit work*; pair with `result_endpoint` to
+collect what they built.
+
+Full guide: **[docs/user/web-exercises.md](docs/user/web-exercises.md)**;
+reference course in `src/content/courses/8.web-demo/`.
+
 ## Flashcard decks
 
 One file per deck in `src/content/flashcards/`; the file name is the deck's
