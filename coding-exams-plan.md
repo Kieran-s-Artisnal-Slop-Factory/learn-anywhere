@@ -311,6 +311,14 @@ chapter test, and everything survives reload + offline.
 
 ### Phase 3: document
 
+> **Status: ✅ complete.** Shipped `docs/user/runtimes.md`,
+> `docs/user/database-exercises.md` (incl. the lite-learner introspection
+> recipes and the result_endpoint payload), and
+> `docs/dev/database-runtime.md` (plumbing, worker protocol, three mermaid
+> sequence diagrams, pglite walkthrough with dialect caveats, known
+> quirks). Course/Development guides + README now point at them.
+> **Type 1 — Database is fully done.** Next: Type 2 — Web preview.
+
 - `docs/user/database-exercises.md`: authoring schema, ORDER BY/positional
   comparison rules, coercion table (null/number/boolean/string — lifted from
   the comparator), introspection recipes (from lite-learner's course guide),

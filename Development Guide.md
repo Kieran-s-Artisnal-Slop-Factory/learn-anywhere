@@ -202,6 +202,22 @@ a Contact link to `/contact/` (custom subject + message via
 `ContactApp.svelte`). Both POST form data (`subject`, `message`, optional
 sender fields/headers) to the endpoint.
 
+## Code runtimes & database exercises
+
+Code-based exercises live behind an opt-in **runtime** system: sites list
+engine ids in `astro.config.mjs` (`runtimes`), a preflight script verifies
+the npm packages, and content using a disabled runtime fails the build. The
+first shipped kind is **database exercises** — SQL against SQLite-WASM in a
+Web Worker, with lite-learner's state-comparison checking, a DB viewer, and
+a playground with snapshot persistence and exports.
+
+Full implementation guide (plumbing, worker protocol, sequence diagrams,
+and the pglite extension walkthrough):
+**[docs/dev/database-runtime.md](docs/dev/database-runtime.md)**. Authoring:
+**[docs/user/database-exercises.md](docs/user/database-exercises.md)** +
+**[docs/user/runtimes.md](docs/user/runtimes.md)**. Roadmap for the web and
+pure-code kinds: `coding-exams-plan.md` / `general-code-exams-plan.md`.
+
 ## Progress model
 
 Completion is always a **nullable `completed` timestamp**. `lib/progress.ts`

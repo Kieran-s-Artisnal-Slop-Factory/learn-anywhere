@@ -42,6 +42,11 @@ If you have any of the following requirements, you may be better off looking for
   per-lesson feedback buttons and a general Contact page
 - **Score tracking** — the courses page shows lessons completed, overall
   score, and quiz/test breakdowns per enrolled course
+- **Database exercises** — lessons and chapter tests as SQL workspaces
+  against a real in-browser SQLite database, checked by database *state*
+  (not answer matching), plus a persistent playground with exports. Opt-in
+  per site — see [docs/user/runtimes.md](docs/user/runtimes.md) and
+  [docs/user/database-exercises.md](docs/user/database-exercises.md)
 - **Flashcards** — authored decks of front/back cards with a shuffle-and-repeat
   practice mode (missed cards recycle until learned)
 - **Glossary** — one markdown file per term with a short popup description and

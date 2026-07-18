@@ -245,6 +245,21 @@ headers *when* the visitor has set a profile (unlike result endpoints, a
 profile is not required to send feedback). Leave `contactEndpoint` as an
 empty string to disable the whole feature.
 
+## Database exercises
+
+Lessons and chapter tests can be **SQL workspaces** backed by a real SQLite
+database in the browser: declare a `database:` block on a lesson (instead of
+`quiz:`) or `test_database:` on a chapter (instead of `test:`), seed it with
+`initial_sql`, and optionally check the learner's work with a
+`desired_state` query compared against the live database.
+
+This has its own full guide — authoring schema, the positional-comparison
+and coercion rules, and the introspection recipes that make schema/index/
+trigger tasks checkable: **[docs/user/database-exercises.md](docs/user/database-exercises.md)**.
+Enabling the runtime (one config line + one install) is covered in
+**[docs/user/runtimes.md](docs/user/runtimes.md)**; a reference course ships
+in `src/content/courses/9.sql-demo/`.
+
 ## Flashcard decks
 
 One file per deck in `src/content/flashcards/`; the file name is the deck's
