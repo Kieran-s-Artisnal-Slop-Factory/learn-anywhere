@@ -11,12 +11,11 @@
 
   /**
    * Playground island per runtime id — the UI half of the runtime registry
-   * (kept separate so lib/ stays component-free). SQLite's arrives with
-   * Database Phase 2:
-   *
-   *   sqlite: () => import('./SqlitePlayground.svelte').then((m) => m.default),
+   * (kept separate so lib/ stays component-free).
    */
-  const PLAYGROUNDS: Record<string, () => Promise<Component<{ runtimeId: string }>>> = {};
+  const PLAYGROUNDS: Record<string, () => Promise<Component<{ runtimeId: string }>>> = {
+    sqlite: () => import('./SqlitePlayground.svelte').then((m) => m.default),
+  };
 
   const tabs = RUNTIMES.map((id) => ({
     id,

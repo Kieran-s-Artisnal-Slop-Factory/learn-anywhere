@@ -111,6 +111,8 @@
         onSave={saveSolution}
         onPass={completeLesson}
         onMarkDone={completeLesson}
+        endpoint={lesson.result_endpoint ?? null}
+        meta={{ kind: 'quiz', slug: lesson.slug, title: lesson.title }}
       />
     {/if}
   {:else if lesson.kind === 'web'}

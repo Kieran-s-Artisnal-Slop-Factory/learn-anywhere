@@ -22,18 +22,20 @@ test_database:
       - { name: id }
       - { name: book_id }
       - { name: rating }
+  instructions: |
+    Your task: create a `reviews` table with **exactly three columns, in
+    this order**:
+
+    1. `id` — INTEGER, the primary key
+    2. `book_id` — INTEGER
+    3. `rating` — INTEGER
+
+    Write the `CREATE TABLE` statement, run it, and press **Check
+    solution**. The check inspects your database's actual schema, so column
+    names and order matter (types are up to you as long as the columns
+    exist).
 ---
 
-The chapter test — and a demonstration of a **database test**: instead of
-questions, the whole page is a SQL workspace.
-
-Your task: create a `reviews` table with exactly three columns, in this
-order:
-
-1. `id` — INTEGER, the primary key
-2. `book_id` — INTEGER
-3. `rating` — INTEGER
-
-Write the `CREATE TABLE` statement, run it, and press **Check solution**.
-The check inspects your database's actual schema, so column names and order
-matter (types are up to you as long as the columns exist).
+Two lessons on reading data, capped by a **database test**: instead of
+questions, the test page is a SQL workspace with a task to complete against
+a seeded database.

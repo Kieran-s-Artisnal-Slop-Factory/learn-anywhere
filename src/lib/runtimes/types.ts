@@ -48,5 +48,9 @@ export interface DatabaseSession {
   tableData(name: string): Promise<TableData>;
   /** SQL-text snapshot of the current database (schema, optionally data). */
   dump(includeData: boolean): Promise<string>;
+  /** Binary database file image, for download — optional per engine. */
+  serialize?(includeData: boolean): Promise<Uint8Array>;
+  /** Per-table JSON export — optional per engine. */
+  exportJson?(includeData: boolean): Promise<string>;
   destroy(): void;
 }

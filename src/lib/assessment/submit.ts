@@ -100,4 +100,42 @@ export async function postResults(
   }
 }
 
+/**
+ * Code-exercise submission (database now, web later): the solution buffer(s)
+ * plus the check outcome, same envelope/headers as question submissions.
+ * Body: kind, slug, title, submitted_at, sender_*, passed
+ * ('true'|'false'|'n/a' for unevaluated kinds), and one `solution_<name>`
+ * field per buffer (database sends `solution_sql`).
+ */
+export async function postSolutionResult(
+  endpoint: string,
+  meta: SubmissionMeta,
+  solution: Record<string, string>,
+  passed: boolean | null,
+  profile: Profile
+): Promise<void> {
+  const data = new FormData();
+  data.set('kind', meta.kind);
+  data.set('slug', meta.slug);
+  data.set('title', meta.title);
+  data.set('submitted_at', new Date().toISOString());
+  data.set('sender_name', profile.name);
+  data.set('sender_email', profile.email);
+  data.set('passed', passed === null ? 'n/a' : String(passed));
+  for (const [name, text] of Object.entries(solution)) {
+    data.set(`solution_${name}`, text);
+  }
+  const response = await fetch(endpoint, {
+    method: 'POST',
+    headers: {
+      'x-sender-name': headerSafe(profile.name),
+      'x-sender-email': headerSafe(profile.email),
+    },
+    body: data,
+  });
+  if (!response.ok) {
+    throw new Error(`endpoint responded ${response.status} ${response.statusText}`);
+  }
+}
+
 export type { Score };

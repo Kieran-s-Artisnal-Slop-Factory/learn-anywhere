@@ -14,12 +14,19 @@ export interface DatabaseBlock {
   runtime: string; // registry id ('sqlite', later 'pglite')
   initial_sql: string;
   desired_state?: { query: string; rows: Row[] };
+  // Test variants only: markdown task text shown above the workspace on the
+  // test page (a lesson's body plays this role for lesson exercises).
+  instructions?: string;
+  instructions_html?: string; // build-rendered (same pipeline as prompts)
 }
 
 /** A web-preview exercise definition (lesson `web:` / chapter `test_web:`). */
 export interface WebBlock {
   lang: 'js' | 'ts';
   starter: { html: string; css: string; js: string };
+  // Test variants only — see DatabaseBlock.instructions.
+  instructions?: string;
+  instructions_html?: string;
 }
 
 export interface CourseContent {

@@ -145,6 +145,19 @@ const webBlock = z.object({
     .default({}),
 });
 
+/**
+ * Chapter-test variants extend the lesson blocks with `instructions` —
+ * markdown shown above the workspace on the test page. Lessons don't need
+ * it (the lesson body IS the instructions), but a test page has no body of
+ * its own: the chapter's body belongs to the chapter page.
+ */
+const testDatabaseBlock = databaseBlock.extend({
+  instructions: z.string().optional(),
+});
+const testWebBlock = webBlock.extend({
+  instructions: z.string().optional(),
+});
+
 /** "At most one assessment block" — shared by lessons and chapters. */
 const atMostOne = (...blocks: unknown[]) => blocks.filter((b) => b !== undefined).length <= 1;
 
@@ -168,9 +181,9 @@ const chapters = defineCollection({
     }),
     // Present ⇒ the chapter ends with a full-page test that gates completion.
     test: z.array(question).min(1).optional(),
-    // Code-based test variants — same object shapes as the lesson blocks.
-    test_database: databaseBlock.optional(),
-    test_web: webBlock.optional(),
+    // Code-based test variants — the lesson block shapes + `instructions`.
+    test_database: testDatabaseBlock.optional(),
+    test_web: testWebBlock.optional(),
     // POST target for test submissions (sent for human marking). NOT secure —
     // answers are baked into the page; see the Course Development Guide.
     result_endpoint: z.string().url().optional(),
@@ -178,8 +191,8 @@ const chapters = defineCollection({
     .refine((data) => atMostOne(data.test, data.test_database, data.test_web), {
       message: 'a chapter may declare at most one of test / test_database / test_web',
     })
-    .refine((data) => !data.result_endpoint || data.test, {
-      message: 'result_endpoint requires a test to submit',
+    .refine((data) => !data.result_endpoint || data.test || data.test_database, {
+      message: 'result_endpoint requires a test or test_database to submit',
     }),
 });
 
@@ -199,8 +212,8 @@ const lessons = defineCollection({
     .refine((data) => atMostOne(data.quiz, data.database, data.web), {
       message: 'a lesson may declare at most one of quiz / database / web',
     })
-    .refine((data) => !data.result_endpoint || data.quiz, {
-      message: 'result_endpoint requires a quiz to submit',
+    .refine((data) => !data.result_endpoint || data.quiz || data.database, {
+      message: 'result_endpoint requires a quiz or database exercise to submit',
     }),
 });
 

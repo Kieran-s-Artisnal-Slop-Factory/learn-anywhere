@@ -143,7 +143,15 @@ export async function loadCourseTrees(): Promise<CourseEntryTree[]> {
     getCollection('chapters'),
     getCollection('lessons'),
   ]);
-  const trees = resolveTrees(courseEntries, chapterEntries, lessonEntries);
+  // Defensive: the dev server's incremental content sync can re-ingest a
+  // changed index.md WITHOUT the lessons glob's `!**/index.md` exclusion,
+  // leaving a phantom "lesson" whose collapsed id equals its course/chapter
+  // id in the persisted data store (.astro/) — which then trips the orphan
+  // check. A real lesson can never share an id with a course or chapter, so
+  // drop any that do. (`rm -rf .astro` also clears the stale store.)
+  const parentIds = new Set([...courseEntries.map((c) => c.id), ...chapterEntries.map((c) => c.id)]);
+  const realLessons = lessonEntries.filter((l) => !parentIds.has(l.id));
+  const trees = resolveTrees(courseEntries, chapterEntries, realLessons);
   validateRuntimes(trees);
   return trees;
 }
@@ -169,6 +177,17 @@ export function courseContent(entry: CollectionEntry<'courses'>): CourseContent 
   };
 }
 
+/**
+ * Test blocks may carry markdown `instructions` (the test page has no body
+ * of its own) — rendered at build time like question prompts.
+ */
+async function withInstructionsHtml<T extends { instructions?: string }>(
+  block: T | undefined
+): Promise<T | undefined> {
+  if (!block?.instructions) return block;
+  return { ...block, instructions_html: await renderMarkdownFragment(block.instructions) };
+}
+
 export async function chapterContent(entry: CollectionEntry<'chapters'>): Promise<ChapterContent> {
   const body = entry.body ?? '';
   return {
@@ -178,8 +197,8 @@ export async function chapterContent(entry: CollectionEntry<'chapters'>): Promis
     description: body,
     lessons: entry.data.lessons.map((leaf) => `${entry.id}/${leaf}`),
     test: await withPromptHtml(entry.data.test as Question[] | undefined),
-    test_database: entry.data.test_database as DatabaseBlock | undefined,
-    test_web: entry.data.test_web as WebBlock | undefined,
+    test_database: await withInstructionsHtml(entry.data.test_database as DatabaseBlock | undefined),
+    test_web: await withInstructionsHtml(entry.data.test_web as WebBlock | undefined),
     result_endpoint: entry.data.result_endpoint,
   };
 }

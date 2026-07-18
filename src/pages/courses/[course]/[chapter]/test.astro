@@ -36,6 +36,12 @@ const meta =
       ? 'Database test'
       : 'Web test';
 const chapterPayload = await chapterContent(chapter);
+// Test-block `instructions` — the task text for code-based tests (rendered
+// markdown, glossary refs included). Question tests are self-explanatory.
+const instructionsHtml =
+  chapterPayload.test_database?.instructions_html ??
+  chapterPayload.test_web?.instructions_html ??
+  null;
 ---
 
 <Layout title={`Test — ${chapter.data.title}`}>
@@ -48,6 +54,12 @@ const chapterPayload = await chapterContent(chapter);
     <h1>Chapter test: {chapter.data.title}</h1>
     <span class="muted">{meta}</span>
   </div>
+
+  {
+    instructionsHtml && (
+      <div class="prose instructions" set:html={instructionsHtml} />
+    )
+  }
 
   <TestApp
     client:only="svelte"
@@ -77,6 +89,10 @@ const chapterPayload = await chapterContent(chapter);
 </Layout>
 
 <style>
+  .instructions {
+    margin-bottom: var(--space-5);
+  }
+
   .pager {
     display: grid;
     grid-template-columns: 1fr auto 1fr;

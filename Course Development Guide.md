@@ -159,6 +159,12 @@ with more nuance than multiple choice allows — the intended pattern is a
 quiz/test that mixes auto-graded questions with `short_answer`/`long_answer`
 ones, all shipped off together for review.
 
+**Database exercises support it too**: `result_endpoint` next to a lesson's
+`database:` or a chapter's `test_database:` POSTs the learner's SQL on every
+Check (fields: `kind`, `slug`, `title`, `submitted_at`, `sender_*`,
+`passed` (`true`/`false`, or `n/a` for sandboxes), `solution_sql`) with the
+same profile gate and `x-sender-*` headers.
+
 > **This is not secure and not for accredited assessment.** The correct
 > answers are baked into the page (grading runs in the browser), and the
 > sender identity is whatever the visitor typed into their profile — nothing
@@ -197,6 +203,29 @@ page, and the course overview all link to the test.
 
 Chapters support `result_endpoint:` too (next to `test:`) — see
 [Sending results for marking](#sending-results-for-marking-result_endpoint).
+
+**Code-based tests need `instructions`.** A question test explains itself,
+but a `test_database:` (or `test_web:`) page is just a workspace — the
+chapter's markdown body belongs to the *chapter* page, not the test. Give
+the test its task text via the block's `instructions` field (markdown,
+glossary references included), shown above the workspace:
+
+```yaml
+test_database:
+  runtime: sqlite
+  initial_sql: |
+    CREATE TABLE books (...);
+  desired_state:
+    query: SELECT name FROM pragma_table_info('reviews') ORDER BY cid;
+    rows:
+      - { name: id }
+  instructions: |
+    Create a `reviews` table with an `id` column, then press
+    **Check solution**.
+```
+
+(Lesson-level `database:`/`web:` blocks don't take `instructions` — a
+lesson's body already plays that role.)
 
 ## Collecting learner feedback (`contactEndpoint`)
 

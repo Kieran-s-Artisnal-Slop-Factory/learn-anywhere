@@ -16,12 +16,23 @@
    * and compares rows positionally (comparator) — a pass calls onPass().
    * Without one: an explorable sandbox; "Mark as done" calls onMarkDone().
    * Reset discards the DB, clears the saved buffer, and re-seeds.
+   *
+   * Extras:
+   *  - `endpoint`/`meta`: result_endpoint support — every Check (and a
+   *    sandbox Mark-as-done) POSTs the SQL + outcome for human marking.
+   *    Like question forms, submission is blocked until the profile is set.
+   *  - Runaway queries: while a statement runs the toolbar disables; after
+   *    a moment a Stop button appears that terminates the worker and boots
+   *    a fresh seeded engine (the editor buffer is untouched).
    */
   import { onDestroy, onMount } from 'svelte';
   import type { DatabaseBlock } from '../../lib/content/types';
   import { loadRuntime } from '../../lib/runtimes/registry';
-  import type { DatabaseSession, Row, TableData } from '../../lib/runtimes/types';
+  import type { DatabaseSession, Row, RuntimeAdapter, TableData } from '../../lib/runtimes/types';
   import { rowsMatch } from '../../lib/runtimes/sqlite/comparator';
+  import { postSolutionResult, type SubmissionMeta } from '../../lib/assessment/submit';
+  import { getProfile, profileComplete, type Profile } from '../../lib/profile';
+  import { href } from '../../lib/paths';
   import Card from '../Card.svelte';
   import SqlEditor from './SqlEditor.svelte';
   import DbViewer from './DbViewer.svelte';
@@ -33,6 +44,8 @@
     onSave,
     onPass,
     onMarkDone,
+    endpoint = null,
+    meta = null,
   }: {
     block: DatabaseBlock;
     /** Saved buffer from the row — restored, never auto-executed. */
@@ -44,10 +57,15 @@
     onPass: () => Promise<void>;
     /** Sandbox completion (only shown when there's no desired_state). */
     onMarkDone: () => Promise<void>;
+    /** result_endpoint from the content — enables send-for-marking. */
+    endpoint?: string | null;
+    /** Required when endpoint is set: what the receiver sees. */
+    meta?: SubmissionMeta | null;
   } = $props();
 
   const isChecked = block.desired_state !== undefined;
 
+  let adapter: RuntimeAdapter | null = null;
   let session: DatabaseSession | null = null;
   let editor: SqlEditor | undefined = $state();
 
@@ -57,16 +75,45 @@
   let resultRows = $state<Row[]>([]);
   let checked = $state<'pass' | 'fail' | null>(null);
   let restoredBanner = $state(false);
+  let stoppedBanner = $state(false);
 
   let tables = $state<string[]>([]);
   let activeTable = $state<string | null>(null);
   let tableView = $state<TableData | null>(null);
+
+  // Busy / runaway-query handling.
+  let running = $state(false);
+  let stopVisible = $state(false);
+  let stopTimer: ReturnType<typeof setTimeout> | undefined;
+
+  // result_endpoint state.
+  let profile = $state<Profile>({ name: '', email: '' });
+  let profileReady = $state(false);
+  let sendState = $state<'idle' | 'sending' | 'sent' | 'failed'>('idle');
+  let sendError = $state<string | null>(null);
+  let lastOutcome: boolean | null = null;
+  const locked = $derived(endpoint != null && profileReady && !profileComplete(profile));
 
   let saveTimer: ReturnType<typeof setTimeout> | undefined;
 
   function scheduleSave(doc: string) {
     clearTimeout(saveTimer);
     saveTimer = setTimeout(() => void onSave(doc), 600);
+  }
+
+  function beginRun() {
+    running = true;
+    stopVisible = false;
+    clearTimeout(stopTimer);
+    stopTimer = setTimeout(() => {
+      if (running) stopVisible = true;
+    }, 2000);
+  }
+
+  function endRun() {
+    running = false;
+    stopVisible = false;
+    clearTimeout(stopTimer);
   }
 
   async function refreshViewer(preferred?: string | null) {
@@ -83,12 +130,34 @@
     await refreshViewer();
   }
 
+  /** Kill a stuck worker and boot a fresh, seeded engine (buffer untouched). */
+  async function stopAndRestart() {
+    session?.destroy();
+    session = null;
+    endRun();
+    sqlError = null;
+    resultRows = [];
+    checked = null;
+    booting = true;
+    stoppedBanner = true;
+    try {
+      session = adapter ? await adapter.createSession() : null;
+      await seed();
+    } catch (err) {
+      bootError = err instanceof Error ? err.message : String(err);
+    } finally {
+      booting = false;
+    }
+  }
+
   async function run() {
-    if (!session || !editor) return;
+    if (!session || !editor || running) return;
     const doc = editor.getText();
     sqlError = null;
     checked = null;
     restoredBanner = false;
+    stoppedBanner = false;
+    beginRun();
     try {
       if (doc.trim()) {
         resultRows = await session.exec(doc);
@@ -99,30 +168,59 @@
     } catch (err) {
       sqlError = err instanceof Error ? err.message : String(err);
     } finally {
+      endRun();
       clearTimeout(saveTimer);
       await onSave(doc);
     }
   }
 
+  /** POST the buffer + outcome to the result endpoint (when configured). */
+  async function send(passed: boolean | null) {
+    if (!endpoint || !meta) return;
+    lastOutcome = passed;
+    sendState = 'sending';
+    sendError = null;
+    try {
+      await postSolutionResult(endpoint, meta, { sql: editor?.getText() ?? '' }, passed, profile);
+      sendState = 'sent';
+    } catch (err) {
+      sendState = 'failed';
+      sendError = err instanceof Error ? err.message : String(err);
+    }
+  }
+
   async function check() {
-    if (!session || !block.desired_state) return;
+    if (!session || !block.desired_state || running || locked) return;
     sqlError = null;
+    stoppedBanner = false;
+    beginRun();
     try {
       const actual = await session.exec(block.desired_state.query);
       const pass = rowsMatch(block.desired_state.rows, actual);
       checked = pass ? 'pass' : 'fail';
+      endRun();
       if (pass) await onPass();
+      await send(pass);
     } catch (err) {
       sqlError = err instanceof Error ? err.message : String(err);
+    } finally {
+      endRun();
     }
   }
 
+  async function markDone() {
+    if (locked) return;
+    await onMarkDone();
+    await send(null);
+  }
+
   async function reset() {
-    if (!session) return;
+    if (!session || running) return;
     sqlError = null;
     checked = null;
     resultRows = [];
     restoredBanner = false;
+    stoppedBanner = false;
     editor?.setText('');
     clearTimeout(saveTimer);
     await onSave('');
@@ -130,8 +228,10 @@
   }
 
   onMount(async () => {
+    profile = getProfile();
+    profileReady = true;
     try {
-      const adapter = await loadRuntime(block.runtime);
+      adapter = await loadRuntime(block.runtime);
       session = await adapter.createSession();
       await seed();
       if (initialSolution) {
@@ -147,6 +247,7 @@
 
   onDestroy(() => {
     clearTimeout(saveTimer);
+    clearTimeout(stopTimer);
     session?.destroy();
   });
 </script>
@@ -156,10 +257,43 @@
     <p class="banner banner-danger">Failed to start the database: {bootError}</p>
   {/if}
 
+  {#if locked}
+    <p class="banner banner-danger">
+      This {meta?.kind === 'test' ? 'test' : 'exercise'} sends your SQL to the course team for
+      marking, so your name and email must be set before submission — add them in
+      <a href={href('/settings/')}>Settings</a>. You can still run and experiment freely.
+    </p>
+  {:else if endpoint && profileReady && checked === null && sendState === 'idle'}
+    <p class="banner">
+      Checking sends your SQL to the course team for review as
+      <strong>{profile.name}</strong> ({profile.email}).
+    </p>
+  {/if}
+
   {#if restoredBanner}
     <p class="banner banner-warning">
       Your last solution was restored to the editor, but the database has been reset — re-run
       your statements to restore its state.
+    </p>
+  {/if}
+
+  {#if stoppedBanner}
+    <p class="banner banner-warning">
+      The query was stopped and the database reset to its seeded state — your SQL is still in
+      the editor.
+    </p>
+  {/if}
+
+  {#if sendState === 'sending'}
+    <p class="banner">Sending your SQL for review…</p>
+  {:else if sendState === 'sent'}
+    <p class="banner banner-success">Your SQL was sent to the course team for review.</p>
+  {:else if sendState === 'failed'}
+    <p class="banner banner-danger">
+      Saved locally, but sending for review failed ({sendError}).
+      <button type="button" class="btn btn-sm retry" onclick={() => send(lastOutcome)}>
+        Retry send
+      </button>
     </p>
   {/if}
 
@@ -169,13 +303,24 @@
     {/snippet}
     <SqlEditor bind:this={editor} onDocChange={scheduleSave} onRun={run} />
     <div class="row toolbar">
-      <button class="btn btn-primary" onclick={run} disabled={booting}>Run</button>
+      <button class="btn btn-primary" onclick={run} disabled={booting || running}>
+        {running ? 'Running…' : 'Run'}
+      </button>
       {#if isChecked}
-        <button class="btn" onclick={check} disabled={booting}>Check solution</button>
+        <button class="btn" onclick={check} disabled={booting || running || locked}>
+          Check solution
+        </button>
       {:else if !completed}
-        <button class="btn" onclick={onMarkDone} disabled={booting}>Mark as done</button>
+        <button class="btn" onclick={markDone} disabled={booting || running || locked}>
+          Mark as done
+        </button>
       {/if}
-      <button class="btn btn-danger reset" onclick={reset} disabled={booting}>Reset</button>
+      {#if stopVisible && running}
+        <button class="btn btn-danger" onclick={stopAndRestart}>Stop</button>
+      {/if}
+      <button class="btn btn-danger reset" onclick={reset} disabled={booting || running}>
+        Reset
+      </button>
     </div>
     {#if sqlError}
       <p class="banner banner-danger sql-error">{sqlError}</p>
@@ -253,5 +398,9 @@
 
   .kbd-hint {
     font-size: var(--font-size-sm);
+  }
+
+  .retry {
+    margin-left: var(--space-2);
   }
 </style>

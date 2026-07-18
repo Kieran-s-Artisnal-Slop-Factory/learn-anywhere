@@ -95,6 +95,8 @@
       onSave={saveTestSolution}
       onPass={completeDatabaseTest}
       onMarkDone={completeDatabaseTest}
+      endpoint={chapter.result_endpoint ?? null}
+      meta={{ kind: 'test', slug: chapter.slug, title: chapter.title }}
     />
   {:else if chapter.test}
     <AssessmentForm

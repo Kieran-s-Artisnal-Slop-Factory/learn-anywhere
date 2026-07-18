@@ -236,6 +236,9 @@ its own exit criteria.
 > → completion), buffer restored without executing (+ banner) on reload,
 > database chapter test (schema introspection check → test_completed →
 > chapter cascade). Demo content in `src/content/courses/9.sql-demo/`.
+> Post-review addition: test blocks (`test_database`/`test_web`) take an
+> `instructions` markdown field, rendered above the workspace on the test
+> page (question tests are self-explanatory; lessons use their body).
 > Note: the site left runtime `sqlite` enabled — the demo course requires it.
 
 Goal: a playable SQLite exercise lesson + chapter test, faithful to
@@ -286,6 +289,15 @@ update, get a pass/fail check that completes the lesson, take a database
 chapter test, and everything survives reload + offline.
 
 ### Phase 2: polish
+
+> **Status: ✅ complete.** Verified in-browser: playground (run SQL, snapshot
+> save → reload → restore, .sql/.sqlite exports, schema-only toggle), busy
+> state + Stop recovery on a runaway recursive CTE (worker terminated, fresh
+> seeded engine, buffer kept), result_endpoint for database exercises/tests
+> (profile-gated Check with Run left free; receiver got x-sender-* headers,
+> `passed`, and `solution_sql`). Reset-progress already clears solutions.
+> Deferred to P3/later: playground templates (lite-learner has them; port if
+> wanted), demo-course expansion into 101.
 
 - SQLite **playground** tab: editor + viewer + "save database snapshot"
   (`dump`) restored on load — lite-learner's playground, on the per-runtime
