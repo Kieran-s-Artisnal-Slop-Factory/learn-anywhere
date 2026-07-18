@@ -5,6 +5,7 @@ lessons:
   - flashcard-decks
   - feedback-and-contact
   - result-endpoints
+  - interface-walkthroughs
 test:
   - type: multiple_choice
     prompt: What defines a glossary term?
@@ -41,9 +42,17 @@ test:
       - They make quizzes cheat-proof
       - The learner must set a profile before submitting
     answer: [0, 1, 3]
+  - type: multiple_choice
+    prompt: A site wants only the quiz walkthrough from the Platform walkthrough course. What does its config look like?
+    options:
+      - "`interfaceTutorials` with only `quizes: true`"
+      - "`runtimes: ['quiz']`"
+      - It must delete the other chapters' files
+      - Impossible — the course is all-or-nothing
+    answer: 0
   - type: long_answer
     prompt: Describe a scenario where a result endpoint fits better than pure auto-grading.
 ---
 
-Glossary, flashcards, feedback, and result endpoints — the systems around the
-lessons. This test covers all four.
+Glossary, flashcards, feedback, result endpoints, and interface
+walkthroughs — the systems around the lessons. This test covers all five.

@@ -293,6 +293,28 @@ collect what they built.
 Full guide: **[web-exercises.md](web-exercises.md)**;
 reference course in `src/content/courses/8.web-demo/`.
 
+## Interface walkthroughs (`interfaceTutorials`)
+
+The repo ships a built-in **Platform walkthrough** course
+(`src/content/courses/0.platform-walkthrough/`) with one single-lesson
+chapter per interface — standard quizzes, the database workspace, and the
+web workspace. It's opt-in per chapter via `interfaceTutorials` in
+`astro.config.mjs`:
+
+```js
+const interfaceTutorials = {
+  web: false,      // web workspace tour (needs the 'web' runtime)
+  database: false, // database workspace tour (needs the 'sqlite' runtime)
+  quizes: false,   // every question type in one hands-on quiz
+};
+```
+
+All flags default to `false`; the course only exists on the site when at
+least one is `true`, and disabled chapters are left out entirely (pages,
+course listing, offline precache, progress). Enabling `web` or `database`
+without the matching entry in `runtimes` fails the build with the usual
+runtime message.
+
 ## Flashcard decks
 
 One file per deck in `src/content/flashcards/`; the file name is the deck's

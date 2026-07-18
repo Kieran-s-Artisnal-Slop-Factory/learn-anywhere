@@ -54,6 +54,10 @@ If you have any of the following requirements, you may be better off looking for
   sandboxed preview, Emmet, console capture, and zip/screenshot exports;
   submitted rather than graded. See
   [docs/user/web-exercises.md](docs/user/web-exercises.md)
+- **Interface walkthroughs** — an optional built-in "Platform walkthrough"
+  course teaching learners the quiz, database, and web interfaces; each
+  chapter toggled by `interfaceTutorials` in `astro.config.mjs` (all off by
+  default)
 - **Flashcards** — authored decks of front/back cards with a shuffle-and-repeat
   practice mode (missed cards recycle until learned)
 - **Glossary** — one markdown file per term with a short popup description and

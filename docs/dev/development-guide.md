@@ -202,6 +202,24 @@ a Contact link to `/contact/` (custom subject + message via
 `ContactApp.svelte`). Both POST form data (`subject`, `message`, optional
 sender fields/headers) to the endpoint.
 
+### Interface walkthroughs
+
+The **Platform walkthrough** course
+(`src/content/courses/0.platform-walkthrough/`) is real, always-present
+content that ships conditionally: the `interfaceTutorials` flags in
+`astro.config.mjs` (keys `web` / `database` / `quizes`) flow through a Vite
+define into `lib/content/tutorials.ts`, and `filterWalkthrough()` in
+`lib/content/bundle.ts` prunes the resolved course tree — dropping disabled
+chapters from both the tree and the course's own `chapters` list (so
+progress math agrees), and dropping the course entirely when nothing
+remains. Because `loadCourseTrees()` is the single source for pages,
+precache, and course listings, no other code needs to know the flags. The
+filter runs *before* `validateRuntimes()`, so a disabled database/web
+walkthrough never demands its runtime — while an enabled one without the
+runtime fails the build normally. Chapter-leaf → flag mapping lives in
+`tutorials.ts` (`quizzes` → `quizes`); user-facing docs are in the Course
+Development Guide.
+
 ## Code runtimes & database exercises
 
 Code-based exercises live behind an opt-in **runtime** system: sites list

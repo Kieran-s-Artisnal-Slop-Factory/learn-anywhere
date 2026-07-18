@@ -16,6 +16,7 @@ import { RUNTIMES, runtimeEnabled } from '../runtimes/config';
 import { installHint, knownRuntime } from '../runtimes/info';
 import { renderMarkdownFragment } from './markdown';
 import { resolveTrees } from './resolve';
+import { WALKTHROUGH_COURSE_ID, walkthroughChapterEnabled } from './tutorials';
 import type {
   ChapterContent,
   CourseContent,
@@ -151,9 +152,36 @@ export async function loadCourseTrees(): Promise<CourseEntryTree[]> {
   // drop any that do. (`rm -rf .astro` also clears the stale store.)
   const parentIds = new Set([...courseEntries.map((c) => c.id), ...chapterEntries.map((c) => c.id)]);
   const realLessons = lessonEntries.filter((l) => !parentIds.has(l.id));
-  const trees = resolveTrees(courseEntries, chapterEntries, realLessons);
+  const trees = filterWalkthrough(resolveTrees(courseEntries, chapterEntries, realLessons));
   validateRuntimes(trees);
   return trees;
+}
+
+/**
+ * The built-in "Platform walkthrough" course ships chapter-by-chapter behind
+ * the `interfaceTutorials` flags in astro.config.mjs: disabled chapters are
+ * dropped (from the tree AND the course's own chapter list, so progress math
+ * agrees), and the course disappears entirely when every flag is false.
+ * Runs before validateRuntimes so a disabled database/web walkthrough never
+ * demands its runtime.
+ */
+function filterWalkthrough(trees: CourseEntryTree[]): CourseEntryTree[] {
+  return trees.flatMap((tree) => {
+    if (tree.course.id !== WALKTHROUGH_COURSE_ID) return [tree];
+    const chapters = tree.chapters.filter(({ chapter }) =>
+      walkthroughChapterEnabled(chapter.id.split('/').pop()!)
+    );
+    if (chapters.length === 0) return [];
+    const keptLeaves = new Set(chapters.map(({ chapter }) => chapter.id.split('/').pop()!));
+    const course = {
+      ...tree.course,
+      data: {
+        ...tree.course.data,
+        chapters: tree.course.data.chapters.filter((leaf) => keptLeaves.has(leaf)),
+      },
+    };
+    return [{ course, chapters }];
+  });
 }
 
 export async function toBundle(tree: CourseEntryTree): Promise<CourseBundle> {

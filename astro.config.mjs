@@ -39,6 +39,17 @@ const partial_grades = false;
 // Exported so scripts/check-runtimes.mjs can read the same list.
 export const runtimes = ['sqlite', 'web'];
 
+// Whether to include tutorials on how to use specific interfaces. Each flag
+// adds one chapter (with a single walkthrough lesson) to a built-in
+// "Platform walkthrough" course; the course only exists if at least one flag
+// is true. Enabling `web` or `database` requires the matching runtime in
+// `runtimes` above, or the build fails.
+const interfaceTutorials = {
+  web: false, // Include a web interface tutorial lesson
+  database: false, // Include a database interface tutorial lesson
+  quizes: false, // Include an interface walkthrough for standard quizzes (multiple choice, short/long answer, numerical answers etc.)
+};
+
 // https://astro.build/config
 export default defineConfig({
   base:base,
@@ -69,6 +80,7 @@ export default defineConfig({
       'import.meta.env.PUBLIC_CONTACT_ENDPOINT': JSON.stringify(contactEndpoint),
       'import.meta.env.PUBLIC_PARTIAL_GRADES': JSON.stringify(partial_grades),
       'import.meta.env.PUBLIC_RUNTIMES': JSON.stringify(runtimes),
+      'import.meta.env.PUBLIC_INTERFACE_TUTORIALS': JSON.stringify(interfaceTutorials),
     },
   },
 });
