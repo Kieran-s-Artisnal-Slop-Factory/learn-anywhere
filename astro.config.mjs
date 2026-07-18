@@ -29,7 +29,7 @@ const contactEndpoint = '';
 // Applies to every quiz and test on the site; scores may be fractional.
 const partial_grades = false;
 
-// Which code-exercise runtimes this site ships (coding-exams-plan.md). Each
+// Which code-exercise runtimes this site ships (docs/user/runtimes.md). Each
 // entry needs its npm packages installed — `npm run dev`/`build` preflight-
 // check them and print the install command if any are missing. Content that
 // uses a runtime not listed here FAILS THE BUILD. Empty = no code exercises,

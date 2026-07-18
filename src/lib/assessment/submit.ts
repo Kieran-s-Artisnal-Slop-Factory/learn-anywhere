@@ -6,7 +6,7 @@
  *
  * NOT a security boundary: the correct answers are baked into the page (the
  * grader runs client-side), and the sender identity is whatever the visitor
- * typed into their profile. See the Course Development Guide.
+ * typed into their profile. See docs/user/course-development-guide.md.
  *
  * Identity travels as request headers (x-sender-name / x-sender-email) and is
  * duplicated into the body for receivers that prefer form fields. Custom
@@ -32,6 +32,7 @@ export function responseText(question: Question, response: QuestionResponse): st
         : '';
     case 'short_answer':
     case 'long_answer':
+    case 'numeric':
       return typeof response === 'string' ? response : '';
   }
 }

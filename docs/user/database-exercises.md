@@ -228,7 +228,8 @@ Payload (form data): `kind` (`quiz` for lessons, `test` for chapter tests),
 (`true`/`false`; `n/a` when a sandbox is marked done), and `solution_sql`
 (the editor buffer). Sender identity also travels as
 `x-sender-name`/`x-sender-email` headers; the endpoint must handle CORS as
-described in the Course Development Guide. The learner must set a profile
+described in the [Course Development Guide](course-development-guide.md).
+The learner must set a profile
 before Check unlocks — Run and exploration stay free.
 
 The same caveat as always applies: **not secure, not for accredited
@@ -269,4 +270,4 @@ fit an exercise.
 
 Editing a shipped exercise is safe — learner progress survives content
 updates. Renaming the file is not (it changes the identity and orphans
-their progress); see the Course Development Guide.
+their progress); see the [Course Development Guide](course-development-guide.md).

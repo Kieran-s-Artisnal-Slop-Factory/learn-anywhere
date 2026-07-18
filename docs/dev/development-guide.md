@@ -2,7 +2,7 @@
 
 System architecture, project layout, and the key technologies and approaches
 behind learn-anywhere. For authoring content, see the
-[Course Development Guide](Course%20Development%20Guide.md).
+[Course Development Guide](../user/course-development-guide.md).
 
 ## The core idea
 
@@ -216,12 +216,12 @@ sandboxed live preview (srcdoc iframe), console capture, Sucrase type
 stripping, Emmet, zip/screenshot exports, and a playground tab.
 
 Implementation guides (plumbing, protocols, sequence diagrams, extension
-walkthroughs): **[docs/dev/database-runtime.md](docs/dev/database-runtime.md)**
-and **[docs/dev/web-runtime.md](docs/dev/web-runtime.md)**. Authoring:
-**[docs/user/database-exercises.md](docs/user/database-exercises.md)**,
-**[docs/user/web-exercises.md](docs/user/web-exercises.md)**, and
-**[docs/user/runtimes.md](docs/user/runtimes.md)**. Roadmap for the deferred
-pure-code kind: `general-code-exams-plan.md`.
+walkthroughs): **[database-runtime.md](database-runtime.md)**
+and **[web-runtime.md](web-runtime.md)**. Authoring:
+**[database-exercises.md](../user/database-exercises.md)**,
+**[web-exercises.md](../user/web-exercises.md)**, and
+**[runtimes.md](../user/runtimes.md)**. Roadmap for the deferred
+pure-code kind: [../plans/general-code-exams-plan.md](../plans/general-code-exams-plan.md).
 
 ## Progress model
 

@@ -56,7 +56,7 @@ export interface ChapterContent {
  * A lesson's kind is derived at build time from which assessment block its
  * frontmatter declares (at most one), never authored: `quiz` ⇒ exercise,
  * `database`/`web` ⇒ that kind, none ⇒ reading. The pure-code extension
- * adds 'code' (general-code-exams-plan.md).
+ * adds 'code' (docs/plans/general-code-exams-plan.md).
  */
 export type LessonKind = 'exercise' | 'reading' | 'database' | 'web';
 

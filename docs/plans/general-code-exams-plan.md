@@ -3,7 +3,8 @@
 The third code-based exercise kind: **pure code** — arbitrary-language
 exercises evaluated in the browser via WASM runtimes, with output in a
 terminal emulator. Deliberately **deferred until after the main plan**
-(`coding-exams-plan.md`: foundation + database + web preview) is complete:
+(`plan-archive/coding-exams-plan.md`: foundation + database + web preview,
+now fully shipped and archived) is complete:
 it carries the most caveats (worker lifecycle, large assets, runtime
 sourcing, honest language limits), and the direction below was worked out in
 advance so the foundation doesn't paint us into a corner.

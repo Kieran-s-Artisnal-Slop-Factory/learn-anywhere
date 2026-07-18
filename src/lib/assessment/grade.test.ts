@@ -97,6 +97,42 @@ describe('grade', () => {
     expect(grade([q], [[1, 2, 3]]).score.correct).toBe(0);
   });
 
+  it('grades numeric questions: single, multi, tuples, precision', () => {
+    const single: Question = { type: 'numeric', prompt: '6×7?', answer: 42, integer: true };
+    expect(grade([single], ['42']).score.correct).toBe(1);
+    expect(grade([single], [' 42 ']).score.correct).toBe(1);
+    expect(grade([single], ['41']).score.correct).toBe(0);
+    expect(grade([single], ['forty-two']).score.correct).toBe(0);
+
+    const multi: Question = { type: 'numeric', prompt: 'factors of 10?', answer: [1, 2, 5, 10] };
+    expect(grade([multi], ['10, 5, 2, 1']).score.correct).toBe(1);
+    expect(grade([multi], ['1, 2, 5']).score.correct).toBe(0);
+
+    const precise: Question = { type: 'numeric', prompt: 'compute', answer: 4.3875, precision: 3 };
+    expect(grade([precise], ['4.3879']).score.correct).toBe(1);
+    expect(grade([precise], ['4.389']).score.correct).toBe(0);
+
+    const tuples: Question = {
+      type: 'numeric',
+      prompt: 'points?',
+      answer: [
+        [10, 15],
+        [12.4, -36.2],
+      ],
+    };
+    expect(grade([tuples], ['(12.4, -36.2), (10, 15)']).score.correct).toBe(1);
+    expect(grade([tuples], ['(10, 15)']).score.correct).toBe(0);
+  });
+
+  it('awards numeric partial credit only for multi-value answers when enabled', () => {
+    const multi: Question = { type: 'numeric', prompt: 'p', answer: [1, 2, 5, 10] };
+    // 3 hits, 1 miss → (3-1)/4 = 0.5
+    expect(grade([multi], ['1, 2, 5, 99'], { partialGrades: true }).score.correct).toBe(0.5);
+    expect(grade([multi], ['1, 2, 5, 99']).score.correct).toBe(0);
+    const single: Question = { type: 'numeric', prompt: 's', answer: 7 };
+    expect(grade([single], ['8'], { partialGrades: true }).score.correct).toBe(0);
+  });
+
   it('records short answers without grading them', () => {
     const q: Question = { type: 'short_answer', prompt: 'Explain' };
     const { results, score } = grade([q], ['because reasons']);
@@ -138,6 +174,13 @@ describe('allAnswered', () => {
     const q: Question = { type: 'multi_select', prompt: 'm', options: ['a', 'b'], answer: [0] };
     expect(allAnswered([q], [[]])).toBe(false);
     expect(allAnswered([q], [[1]])).toBe(true);
+  });
+
+  it('requires numeric answers to parse', () => {
+    const q: Question = { type: 'numeric', prompt: 'n', answer: 7, integer: true };
+    expect(allAnswered([q], ['abc'])).toBe(false);
+    expect(allAnswered([q], ['7.5'])).toBe(false); // integer mode
+    expect(allAnswered([q], ['7'])).toBe(true);
   });
 
   it('requires non-blank text for short and long answers', () => {

@@ -5,6 +5,8 @@
    * per-question result drives the ✓/✗ feedback and correct-answer reveal.
    */
   import { effectiveOptions, type Question, type QuestionResponse, type QuestionResult } from '../../lib/assessment/types';
+  import { formatNumericAnswer, numericHint } from '../../lib/assessment/numeric';
+  import { parseNumericResponse } from '../../lib/assessment/grade';
 
   let {
     question,
@@ -37,6 +39,14 @@
       current.includes(idx) ? current.filter((v) => v !== idx) : [...current, idx].sort((a, b) => a - b)
     );
   }
+
+  // Numeric questions: live parse feedback while answering (only once the
+  // learner typed something), and the expected answer revealed after grading.
+  const numericParse = $derived(
+    question.type === 'numeric' && typeof response === 'string' && response.trim() !== ''
+      ? parseNumericResponse(question, response)
+      : null
+  );
 
   /** Feedback class for one option row after grading. */
   function optionState(idx: number): 'correct' | 'wrong' | null {
@@ -127,6 +137,23 @@
         </label>
       {/each}
     </div>
+  {:else if question.type === 'numeric'}
+    <p class="muted hint">{numericHint(question.answer, question)}</p>
+    <input
+      type="text"
+      inputmode="text"
+      placeholder="Your answer…"
+      disabled={graded}
+      class:input-invalid={!graded && numericParse !== null && !numericParse.ok}
+      value={typeof response === 'string' ? response : ''}
+      oninput={(e) => onRespond((e.target as HTMLInputElement).value)}
+    />
+    {#if !graded && numericParse !== null && !numericParse.ok}
+      <p class="muted parse-hint">{numericParse.error}</p>
+    {/if}
+    {#if graded && result?.correct === false}
+      <p class="expected-reveal">Expected: {formatNumericAnswer(question.answer)}</p>
+    {/if}
   {:else if question.type === 'short_answer'}
     <p class="muted hint">Written answer — recorded but not auto-graded.</p>
     <input
@@ -256,5 +283,22 @@
 
   textarea {
     resize: vertical;
+  }
+
+  .input-invalid {
+    border-color: var(--color-warning);
+  }
+
+  .parse-hint {
+    font-size: var(--font-size-sm);
+    margin-top: var(--space-1);
+    color: var(--color-warning);
+  }
+
+  .expected-reveal {
+    margin-top: var(--space-2);
+    font-size: var(--font-size-sm);
+    font-family: var(--font-mono);
+    color: var(--text-muted-color);
   }
 </style>

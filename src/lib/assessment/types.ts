@@ -17,6 +17,8 @@
  *    endpoint for human marking
  */
 
+import type { NumericAnswer } from './numeric';
+
 /**
  * Prompts are authored as markdown (glossary [[refs]] included). The build
  * renders each one to HTML (bundle.ts) and attaches it as `prompt_html`;
@@ -65,19 +67,39 @@ export interface LongAnswerQuestion {
   prompt_html?: string;
 }
 
+/**
+ * Free-entry numeric answers: one number, several (comma-separated entry,
+ * order-insensitive), or tuples. See lib/assessment/numeric.ts for the
+ * parsing/matching rules; the response is the raw entered string.
+ */
+export interface NumericQuestion {
+  type: 'numeric';
+  prompt: string;
+  prompt_html?: string;
+  answer: NumericAnswer;
+  /** Whole numbers only (entry-validated; comparison exact). */
+  integer?: boolean;
+  /** Disallow negative values in the entry. */
+  positive?: boolean;
+  /** Decimals of tolerance (3 ⇒ |diff| ≤ 0.0005). Default: 1e-9. */
+  precision?: number;
+}
+
 export type Question =
   | MultipleChoiceQuestion
   | TrueFalseQuestion
   | MultiSelectQuestion
   | ShortAnswerQuestion
-  | LongAnswerQuestion;
+  | LongAnswerQuestion
+  | NumericQuestion;
 
 /**
  * One response per question, by position. `null` = unanswered.
  *  - multiple_choice: index into the EFFECTIVE option list (authored + all/none)
  *  - true_false: boolean
  *  - multi_select: selected indices
- *  - short_answer / long_answer: the entered text
+ *  - short_answer / long_answer / numeric: the entered text (numeric parses
+ *    it at grade time)
  */
 export type QuestionResponse = number | boolean | number[] | string | null;
 
@@ -90,11 +112,15 @@ export interface Score {
 /** Per-question grading outcome; `correct: null` = not gradable (short answer). */
 export interface QuestionResult {
   correct: boolean | null;
-  /** Index of the right choice in the effective option list, where applicable. */
-  expected: number | boolean | number[] | null;
   /**
-   * Multi-select partial credit (0–1), present only when the site enables
-   * `partial_grades` and the answer was neither fully right nor worthless.
+   * The right answer, shaped per type: effective option index (mc), boolean
+   * (tf), indices (multi-select), the numeric answer (numeric).
+   */
+  expected: number | boolean | number[] | number[][] | null;
+  /**
+   * Partial credit (0–1) for multi-select / multi-value numeric, present
+   * only when the site enables `partial_grades` and the answer was neither
+   * fully right nor worthless.
    */
   partial?: number;
 }

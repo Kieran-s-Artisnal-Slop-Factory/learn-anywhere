@@ -101,19 +101,59 @@ const longAnswer = z.object({
   prompt: z.string(),
 });
 
+const numeric = z
+  .object({
+    type: z.literal('numeric'),
+    prompt: z.string(),
+    // One number, several (comma-separated entry), or tuples (list of lists).
+    answer: z.union([
+      z.number(),
+      z.array(z.number()).min(1),
+      z.array(z.array(z.number()).min(2)).min(1),
+    ]),
+    // Whole numbers only (entry-validated; exact comparison).
+    integer: z.boolean().optional(),
+    // Disallow negative values in the entry.
+    positive: z.boolean().optional(),
+    // Decimals of tolerance (3 ⇒ |diff| ≤ 0.0005). Default: exact-ish (1e-9).
+    precision: z.number().int().nonnegative().optional(),
+  })
+  .superRefine((q, ctx) => {
+    const values: number[] = Array.isArray(q.answer)
+      ? (q.answer as (number | number[])[]).flatMap((v) => (Array.isArray(v) ? v : [v]))
+      : [q.answer];
+    if (q.integer && values.some((v) => !Number.isInteger(v))) {
+      ctx.addIssue({ code: 'custom', message: 'integer: true but the answer contains non-integers' });
+    }
+    if (q.positive && values.some((v) => v < 0)) {
+      ctx.addIssue({ code: 'custom', message: 'positive: true but the answer contains negatives' });
+    }
+    if (q.integer && q.precision !== undefined) {
+      ctx.addIssue({ code: 'custom', message: 'precision has no effect with integer: true' });
+    }
+    if (Array.isArray(q.answer) && Array.isArray(q.answer[0])) {
+      const sizes = new Set((q.answer as number[][]).map((t) => t.length));
+      if (sizes.size > 1) {
+        ctx.addIssue({ code: 'custom', message: 'all tuples in an answer must be the same size' });
+      }
+    }
+  });
+
 const question = z.discriminatedUnion('type', [
   multipleChoice,
   trueFalse,
   multiSelect,
   shortAnswer,
   longAnswer,
+  numeric,
 ]);
 
 /**
- * Code-exercise blocks (coding-exams-plan.md). A lesson/chapter declares AT
+ * Code-exercise blocks (docs/user/database-exercises.md, web-exercises.md).
+ * A lesson/chapter declares AT
  * MOST ONE assessment (quiz/test, database, or web); the kind is derived from
  * which block is present, never authored. `code:`/`test_code:` are reserved
- * for the pure-code extension (general-code-exams-plan.md).
+ * for the pure-code extension (docs/plans/general-code-exams-plan.md).
  *
  * Whether the named runtime is enabled on this site is validated at build
  * time in lib/content/bundle.ts (schemas can't see astro.config).
@@ -185,7 +225,7 @@ const chapters = defineCollection({
     test_database: testDatabaseBlock.optional(),
     test_web: testWebBlock.optional(),
     // POST target for test submissions (sent for human marking). NOT secure —
-    // answers are baked into the page; see the Course Development Guide.
+    // answers are baked into the page; see docs/user/course-development-guide.md.
     result_endpoint: z.string().url().optional(),
   })
     .refine((data) => atMostOne(data.test, data.test_database, data.test_web), {

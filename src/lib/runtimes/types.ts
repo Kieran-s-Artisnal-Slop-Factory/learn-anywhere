@@ -3,7 +3,7 @@
  * exercises lives behind these interfaces so new runtimes (pglite, and later
  * the pure-code extension's engines) are additive.
  *
- * The pure-code extension (general-code-exams-plan.md) widens RuntimeAdapter
+ * The pure-code extension (docs/plans/general-code-exams-plan.md) widens RuntimeAdapter
  * with kind 'code' and a process-model session — nothing here may assume
  * database-only beyond the `kind` union.
  */

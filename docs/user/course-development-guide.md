@@ -1,6 +1,6 @@
 # Course Development Guide
 
-How to author courses, quizzes, chapter tests, and glossary terms. For  technical details like the system architecture, see the [Development Guide](Development%20Guide.md).
+How to author courses, quizzes, chapter tests, and glossary terms. For technical details like the system architecture, see the [Development Guide](../dev/development-guide.md).
 
 ## Layout
 
@@ -40,7 +40,8 @@ lessons:
 ```
 
 The build fails on a listed child that doesn't exist and on files no parent
-lists — broken wiring can't ship.
+lists — broken wiring can't ship. (Only `.md` files are content: images and
+other assets can sit beside lessons freely — see [images.md](images.md).)
 
 ## Lessons: readings and exercises
 
@@ -53,7 +54,7 @@ A lesson's markdown body is the left-hand prose. Its kind is derived:
 ## Questions (quizzes and tests share this format)
 
 `quiz:` (lessons) and `test:` (chapter `index.md`) are arrays of questions.
-Five types:
+Six types:
 
 ```yaml
 quiz:
@@ -99,6 +100,26 @@ quiz:
   # essay-style responses. Also never auto-graded.
   - type: long_answer
     prompt: Compare spaced repetition and cramming, with examples.
+
+  # Numeric: the learner types the number(s). `answer` is one number,
+  # a list (entered comma-separated, ANY order), or tuples (entered like
+  # "(10, 15), (12.4, -36.2)" — order inside a tuple matters, list order
+  # doesn't). Options: integer (whole numbers only), positive (no negative
+  # entries), precision (decimals of tolerance — precision 3 accepts
+  # 4.3879 for 4.3875; default is near-exact).
+  - type: numeric
+    prompt: What is 6 × 7?
+    answer: 42
+    integer: true
+  - type: numeric
+    prompt: List every factor of 10.
+    answer: [1, 2, 5, 10]
+    integer: true
+    positive: true
+  - type: numeric
+    prompt: Give the roots of x² − 25x + 150 as (smaller, larger).
+    answer: [[10, 15]]
+    precision: 2
 ```
 
 Answer indices are validated at build time (out-of-range indices, `all`
@@ -127,14 +148,14 @@ right or wrong; the score is `correct/gradable`. Short/long answers are
 excluded from `gradable` entirely. Retakes are allowed and overwrite the
 stored responses and score.
 
-**Partial marks for multi-select** (`partial_grades` in `astro.config.mjs`,
-default `false`): when enabled site-wide, a partially right multi-select
-selection earns partial credit — each correctly selected option is worth
-`1/total-correct`, each wrong selection cancels one out, and a question never
-scores below zero. Scores (including `score_correct` in result-endpoint
-submissions) may then be fractional, and partially right questions are
-labelled `partial:<fraction>` instead of `false` in the submission. All other
-question types stay all-or-nothing.
+**Partial marks** (`partial_grades` in `astro.config.mjs`, default `false`):
+when enabled site-wide, partially right answers to **multi-select** and
+**multi-value numeric** questions earn partial credit — each correct
+selection/value is worth `1/total`, each wrong one cancels one out, and a
+question never scores below zero. Scores (including `score_correct` in
+result-endpoint submissions) may then be fractional, and partially right
+questions are labelled `partial:<fraction>` instead of `false` in the
+submission. Single-answer questions stay all-or-nothing.
 
 ## Sending results for marking (`result_endpoint`)
 
@@ -255,9 +276,9 @@ database in the browser: declare a `database:` block on a lesson (instead of
 
 This has its own full guide — authoring schema, the positional-comparison
 and coercion rules, and the introspection recipes that make schema/index/
-trigger tasks checkable: **[docs/user/database-exercises.md](docs/user/database-exercises.md)**.
+trigger tasks checkable: **[database-exercises.md](database-exercises.md)**.
 Enabling the runtime (one config line + one install) is covered in
-**[docs/user/runtimes.md](docs/user/runtimes.md)**; a reference course ships
+**[runtimes.md](runtimes.md)**; a reference course ships
 in `src/content/courses/9.sql-demo/`.
 
 ## Web exercises
@@ -269,7 +290,7 @@ strip, and zip/screenshot exports. Declare `web:` on a lesson or
 learners build and press *Submit work*; pair with `result_endpoint` to
 collect what they built.
 
-Full guide: **[docs/user/web-exercises.md](docs/user/web-exercises.md)**;
+Full guide: **[web-exercises.md](web-exercises.md)**;
 reference course in `src/content/courses/8.web-demo/`.
 
 ## Flashcard decks

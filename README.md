@@ -16,7 +16,7 @@ If you have any of the following requirements, you may be better off looking for
 
 - **Strict Marking**; The system has **all answers** available on the client, meaning it's easy to cheat in
 - **Integrations**; Any additional systems you want to integrate will need to be done manually in the code
-- **Storing Marks**; The system has no backend (no database or server), so while you can store results using the `result_endpoint` feature mentioned in the `Course Development Guide` document, it will require an additional server you need to maintain
+- **Storing Marks**; The system has no backend (no database or server), so while you can store results using the [`result_endpoint`](docs/user/course-development-guide.md#sending-results-for-marking-result_endpoint) feature, it will require an additional server you need to maintain
 - **Cost Gating**; The system is designed to be open. Since everything is static there's no way to easily block people from getting access until they pay. This would need to be handled by an additional gating system, and due to the offline-first nature, it is **incredibly difficult to lock people out** if you want them to only have access for a limited period of time since the course contents are stored on device
 - **Plugins**; The feature set of the system is not designed to be easily extensible. Due to the focus on offline support making sweeping architecture and data model changes is not trivial.
 
@@ -31,6 +31,9 @@ If you have any of the following requirements, you may be better off looking for
   - true / false
   - multi-select (all-or-nothing by default; a site-wide `partial_grades`
     setting in `astro.config.mjs` enables partial credit)
+  - numeric — the learner types the number(s): single values, comma-separated
+    lists (any order), tuples like `(10, 15)`, with optional integer-only,
+    positive-only, and decimal-precision constraints
   - short answer and long answer (stored/sent for review, never auto-graded
     and excluded from the score)
 - **Result endpoints** — a quiz or test can declare a `result_endpoint`;
@@ -59,11 +62,23 @@ If you have any of the following requirements, you may be better off looking for
 - **Offline PWA** — service worker precaches every route; progress backup /
   restore from Settings
 
-## Quick start
+## Documentation
 
-See the [Development Guide](Development%20Guide.md) for architecture and the
-[Course Development Guide](Course%20Development%20Guide.md) for authoring
-courses, quizzes, tests, and glossary terms.
+- [Course Development Guide](docs/user/course-development-guide.md) — authoring
+  courses, quizzes, tests, glossary terms, and flashcards
+- [Adding images](docs/user/images.md) — co-located images, optimization, and
+  the `public/` caveat
+- [Runtimes](docs/user/runtimes.md) — enabling code-exercise engines per site
+- [Database exercises](docs/user/database-exercises.md) ·
+  [Web exercises](docs/user/web-exercises.md)
+- [Development Guide](docs/dev/development-guide.md) — architecture, storage
+  model, and contributor notes (with deeper dives in
+  [docs/dev/](docs/dev/))
+
+The built site also ships with a self-documenting **Learn Anywhere 101**
+course that demonstrates every feature using the platform itself.
+
+## Quick start
 
 ### Building
 

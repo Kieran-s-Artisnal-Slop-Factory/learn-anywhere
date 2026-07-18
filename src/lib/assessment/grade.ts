@@ -4,12 +4,49 @@
  * (grade.test.ts); the quiz/test islands call it and persist the outcome.
  */
 import {
+  expectedList,
+  isTupleAnswer,
+  matchValues,
+  parseNumericInput,
+  toleranceOf,
+} from './numeric';
+import {
   correctIndex,
+  type NumericQuestion,
   type Question,
   type QuestionResponse,
   type QuestionResult,
   type Score,
 } from './types';
+
+/** Parse a numeric response string against its question's shape/options. */
+export function parseNumericResponse(question: NumericQuestion, response: QuestionResponse) {
+  const text = typeof response === 'string' ? response : '';
+  const tuples = isTupleAnswer(question.answer);
+  return parseNumericInput(
+    text,
+    { tuples, tupleSize: tuples ? (question.answer as number[][])[0]!.length : undefined },
+    question
+  );
+}
+
+function gradeNumeric(
+  question: NumericQuestion,
+  response: QuestionResponse,
+  options: GradeOptions
+): QuestionResult {
+  const expected = expectedList(question.answer);
+  const parsed = parseNumericResponse(question, response);
+  if (!parsed.ok) return { correct: false, expected };
+  const outcome = matchValues(expected, parsed.values, toleranceOf(question));
+  if (outcome.exact) return { correct: true, expected };
+  if (options.partialGrades && expected.length > 1) {
+    // Mirror the multi-select rule: wrong entries cancel right ones.
+    const partial = Math.max(0, outcome.hits - outcome.misses) / expected.length;
+    if (partial > 0) return { correct: false, expected, partial };
+  }
+  return { correct: false, expected };
+}
 
 export interface GradeOutcome {
   results: QuestionResult[];
@@ -58,6 +95,8 @@ function gradeOne(
       }
       return { correct, expected };
     }
+    case 'numeric':
+      return gradeNumeric(question, response, options);
   }
 }
 
@@ -95,6 +134,8 @@ export function allAnswered(questions: Question[], responses: QuestionResponse[]
     if (q.type === 'short_answer' || q.type === 'long_answer') {
       return typeof r === 'string' && r.trim() !== '';
     }
+    // Numeric answers must parse (right shape, integer/positive respected).
+    if (q.type === 'numeric') return parseNumericResponse(q, r).ok;
     return true;
   });
 }

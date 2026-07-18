@@ -68,6 +68,24 @@ links.
 
 For example `[[frontmatter|Frontmetter]]` becomes [[frontmatter|Frontmatter]] (More on authoring those in chapter 3.)
 
+## Images
+
+Put the image file **next to the lesson** and reference it with a relative
+path — the build optimizes it (WebP, sized, lazy-loaded) and it works
+offline and under sub-path deploys automatically:
+
+```markdown
+![The site logo, embedded relatively](./demo-image.png)
+```
+
+renders as:
+
+![The site logo, embedded relatively](./demo-image.png)
+
+(The image file lives beside this lesson's `.md`; image files aren't
+content, so they don't need wiring into any list.)
+
 And remember the split: the markdown *body* is prose; everything structured —
 titles, quizzes, ordering — lives in the frontmatter above it, which the next
 lesson covers.
+
