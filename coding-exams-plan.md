@@ -231,6 +231,13 @@ its own exit criteria.
 
 ### Phase 1: initial implementation
 
+> **Status: ✅ complete.** Verified in-browser: sandbox lesson (seeded DB,
+> run, viewer, mark-as-done), checked exercise (CREATE TABLE AS → check pass
+> → completion), buffer restored without executing (+ banner) on reload,
+> database chapter test (schema introspection check → test_completed →
+> chapter cascade). Demo content in `src/content/courses/9.sql-demo/`.
+> Note: the site left runtime `sqlite` enabled — the demo course requires it.
+
 Goal: a playable SQLite exercise lesson + chapter test, faithful to
 lite-learner's behavior, wired into learn-anywhere's progress model.
 

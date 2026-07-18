@@ -12,9 +12,18 @@
 import { createHash } from 'node:crypto';
 import { getCollection, type CollectionEntry } from 'astro:content';
 import type { Question } from '../assessment/types';
+import { RUNTIMES, runtimeEnabled } from '../runtimes/config';
+import { installHint, knownRuntime } from '../runtimes/info';
 import { renderMarkdownFragment } from './markdown';
 import { resolveTrees } from './resolve';
-import type { ChapterContent, CourseContent, LessonContent } from './types';
+import type {
+  ChapterContent,
+  CourseContent,
+  DatabaseBlock,
+  LessonContent,
+  LessonKind,
+  WebBlock,
+} from './types';
 
 /**
  * Question prompts are markdown too (glossary [[refs]] included), but they
@@ -71,10 +80,62 @@ export interface CourseBundle {
 }
 
 /**
+ * The runtime a content file's code-exercise block needs, or null. The web
+ * kind has no authored `runtime:` field — it's the singleton 'web' runtime.
+ */
+function requiredRuntime(data: {
+  database?: { runtime: string };
+  web?: unknown;
+  test_database?: { runtime: string };
+  test_web?: unknown;
+}): string | null {
+  if (data.database) return data.database.runtime;
+  if (data.test_database) return data.test_database.runtime;
+  if (data.web || data.test_web) return 'web';
+  return null;
+}
+
+/**
+ * Build gate: content may only use runtimes this site enables in
+ * astro.config.mjs — same fail-fast philosophy as orphaned lessons and
+ * unknown glossary terms. Collects every offender before throwing.
+ */
+function validateRuntimes(trees: CourseEntryTree[]): void {
+  const problems: string[] = [];
+  const check = (id: string, entryId: string) => {
+    if (!knownRuntime(id)) {
+      problems.push(`  "${entryId}" uses unknown runtime "${id}"`);
+    } else if (!runtimeEnabled(id)) {
+      problems.push(
+        `  "${entryId}" needs runtime "${id}" — add it to \`runtimes\` in astro.config.mjs ` +
+          `and run: ${installHint(id)}`
+      );
+    }
+  };
+  for (const tree of trees) {
+    for (const { chapter, lessons } of tree.chapters) {
+      const chapterRuntime = requiredRuntime(chapter.data);
+      if (chapterRuntime) check(chapterRuntime, chapter.id);
+      for (const lesson of lessons) {
+        const lessonRuntime = requiredRuntime(lesson.data);
+        if (lessonRuntime) check(lessonRuntime, lesson.id);
+      }
+    }
+  }
+  if (problems.length > 0) {
+    throw new Error(
+      `Content uses code runtimes this site doesn't enable ` +
+        `(runtimes: [${RUNTIMES.map((r) => `'${r}'`).join(', ')}]):\n` +
+        problems.join('\n')
+    );
+  }
+}
+
+/**
  * Load every course and resolve the relative-leaf child arrays into full
  * path ids. Throws on a listed child that doesn't exist AND on files no
  * parent lists (orphans) — both would otherwise ship broken or invisible
- * content.
+ * content. Also gates code-exercise runtimes against the site config.
  */
 export async function loadCourseTrees(): Promise<CourseEntryTree[]> {
   const [courseEntries, chapterEntries, lessonEntries] = await Promise.all([
@@ -82,7 +143,9 @@ export async function loadCourseTrees(): Promise<CourseEntryTree[]> {
     getCollection('chapters'),
     getCollection('lessons'),
   ]);
-  return resolveTrees(courseEntries, chapterEntries, lessonEntries);
+  const trees = resolveTrees(courseEntries, chapterEntries, lessonEntries);
+  validateRuntimes(trees);
+  return trees;
 }
 
 export async function toBundle(tree: CourseEntryTree): Promise<CourseBundle> {
@@ -115,8 +178,18 @@ export async function chapterContent(entry: CollectionEntry<'chapters'>): Promis
     description: body,
     lessons: entry.data.lessons.map((leaf) => `${entry.id}/${leaf}`),
     test: await withPromptHtml(entry.data.test as Question[] | undefined),
+    test_database: entry.data.test_database as DatabaseBlock | undefined,
+    test_web: entry.data.test_web as WebBlock | undefined,
     result_endpoint: entry.data.result_endpoint,
   };
+}
+
+/** Derived, never authored: the (at most one) assessment block sets the kind. */
+function lessonKind(data: { quiz?: unknown; database?: unknown; web?: unknown }): LessonKind {
+  if (data.quiz) return 'exercise';
+  if (data.database) return 'database';
+  if (data.web) return 'web';
+  return 'reading';
 }
 
 export async function lessonContent(entry: CollectionEntry<'lessons'>): Promise<LessonContent> {
@@ -126,9 +199,10 @@ export async function lessonContent(entry: CollectionEntry<'lessons'>): Promise<
     content_hash: contentHash(entry.data, body),
     title: entry.data.title,
     description: body,
-    // Derived, never authored: a declared quiz makes it an exercise.
-    kind: entry.data.quiz ? 'exercise' : 'reading',
+    kind: lessonKind(entry.data),
     quiz: await withPromptHtml(entry.data.quiz as Question[] | undefined),
+    database: entry.data.database as DatabaseBlock | undefined,
+    web: entry.data.web as WebBlock | undefined,
     result_endpoint: entry.data.result_endpoint,
   };
 }

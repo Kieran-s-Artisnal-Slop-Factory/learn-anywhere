@@ -18,6 +18,7 @@ export const GET: APIRoute = async () => {
     'settings/',
     'onboarding/',
     'contact/',
+    'playground/',
     'favicon.svg',
     'manifest.webmanifest',
     'icons/icon-192.png',
@@ -30,7 +31,11 @@ export const GET: APIRoute = async () => {
     for (const { chapter, lessons } of tree.chapters) {
       // Ids are path-scoped, so they double as the route path.
       paths.push(`courses/${chapter.id}/`);
-      if (chapter.data.test !== undefined) {
+      if (
+        chapter.data.test !== undefined ||
+        chapter.data.test_database !== undefined ||
+        chapter.data.test_web !== undefined
+      ) {
         paths.push(`courses/${chapter.id}/test/`);
       }
       for (const lesson of lessons) {

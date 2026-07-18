@@ -13,7 +13,13 @@
  * what lets the content-hash check find the right row to refresh.
  */
 import type { Question, QuestionResponse, Score } from '../assessment/types';
-import type { LessonKind } from '../content/types';
+import type { DatabaseBlock, LessonKind, WebBlock } from '../content/types';
+
+/**
+ * A code-exercise solution buffer: SQL text (database kind) or the
+ * per-tab buffers (web kind). Restored on load but never auto-executed.
+ */
+export type Solution = string | Record<string, string>;
 
 /**
  * Bookkeeping fields on every entity. This app is offline-only, but the
@@ -44,11 +50,15 @@ export interface Courses extends SyncFields, CachedContent {
 
 export interface Chapters extends SyncFields, CachedContent {
   lessons: string[]; // ordered lesson slugs — array order is lesson order
+  // At most one of the three test variants (schema-enforced).
   test?: Question[]; // present ⇒ the chapter ends with a full-page test
+  test_database?: DatabaseBlock;
+  test_web?: WebBlock;
   // progress
   test_responses: QuestionResponse[] | null; // last submission's answers
   test_score: Score | null; // last submission's score
   test_completed: string | null; // first submission timestamp — gates chapter completion
+  test_solution: Solution | null; // code-test editor buffer(s)
   started: string | null; // UTC ISO 8601
   completed: string | null; // UTC ISO 8601
 }
@@ -59,10 +69,14 @@ export interface Chapters extends SyncFields, CachedContent {
  */
 export interface Lessons extends SyncFields, CachedContent {
   kind: LessonKind;
+  // At most one assessment block (schema-enforced).
   quiz?: Question[];
+  database?: DatabaseBlock;
+  web?: WebBlock;
   // progress
   quiz_responses: QuestionResponse[] | null; // last submission's answers
   quiz_score: Score | null; // last submission's score
+  solution: Solution | null; // code-exercise editor buffer(s)
   started: string | null; // UTC ISO 8601
   completed: string | null; // UTC ISO 8601
 }

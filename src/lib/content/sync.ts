@@ -51,6 +51,7 @@ export async function syncChapter(content: ChapterContent): Promise<Chapters> {
       test_responses: null,
       test_score: null,
       test_completed: null,
+      test_solution: null,
       started: null,
       completed: null,
     }),
@@ -60,6 +61,8 @@ export async function syncChapter(content: ChapterContent): Promise<Chapters> {
     description: content.description,
     lessons: content.lessons,
     test: content.test,
+    test_database: content.test_database,
+    test_web: content.test_web,
   } as Chapters);
 }
 
@@ -73,6 +76,7 @@ export async function syncLesson(content: LessonContent): Promise<Lessons> {
       ...newContentRow(content.slug),
       quiz_responses: null,
       quiz_score: null,
+      solution: null,
       started: null,
       completed: null,
     }),
@@ -82,6 +86,8 @@ export async function syncLesson(content: LessonContent): Promise<Lessons> {
     description: content.description,
     kind: content.kind,
     quiz: content.quiz,
+    database: content.database,
+    web: content.web,
   } as Lessons);
 }
 

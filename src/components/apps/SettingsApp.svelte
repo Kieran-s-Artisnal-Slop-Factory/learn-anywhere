@@ -8,8 +8,10 @@
     type ExportEnvelope,
   } from '../../lib/db/export';
   import { requestPersistentStorage, type PersistState } from '../../lib/db/persistence';
+  import { getEditorScheme, setEditorScheme, type EditorScheme } from '../../lib/editorTheme';
   import { getPalette, setPalette, PALETTES, type Palette } from '../../lib/palette';
   import { getProfile, setProfile } from '../../lib/profile';
+  import { anyRuntimes } from '../../lib/runtimes/config';
   import {href} from '../../lib/paths';
 
   const THEME_KEY = 'learn-anywhere-theme';
@@ -21,9 +23,23 @@
   let palette = $state<Palette>('gruvbox');
   let persistState: PersistState | null = $state(null);
 
+  // ---- editor scheme (only relevant when code runtimes are enabled)
+  const editorThemes: { value: EditorScheme; label: string }[] = [
+    { value: 'match', label: 'Match app' },
+    { value: 'light', label: 'Light' },
+    { value: 'dark', label: 'Dark' },
+  ];
+  let editorTheme = $state<EditorScheme>('match');
+
+  function setEditor(value: EditorScheme) {
+    editorTheme = value;
+    setEditorScheme(value);
+  }
+
   onMount(async () => {
     theme = localStorage.getItem(THEME_KEY) ?? 'auto';
     palette = getPalette();
+    editorTheme = getEditorScheme();
     const profile = getProfile();
     profileName = profile.name;
     profileEmail = profile.email;
@@ -162,6 +178,26 @@
           {/each}
         </div>
       </div>
+      {#if anyRuntimes()}
+        <div class="setting">
+          <p class="setting-label">Code editor</p>
+          <p class="muted small">
+            Colour scheme for code editors (and their autocomplete popups) — pin them light or
+            dark independent of the app theme.
+          </p>
+          <div class="row">
+            {#each editorThemes as opt (opt.value)}
+              <button
+                class="btn"
+                class:btn-primary={editorTheme === opt.value}
+                onclick={() => setEditor(opt.value)}
+              >
+                {opt.label}
+              </button>
+            {/each}
+          </div>
+        </div>
+      {/if}
     </div>
   </Card>
 

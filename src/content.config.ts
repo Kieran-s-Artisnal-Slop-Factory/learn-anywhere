@@ -109,6 +109,45 @@ const question = z.discriminatedUnion('type', [
   longAnswer,
 ]);
 
+/**
+ * Code-exercise blocks (coding-exams-plan.md). A lesson/chapter declares AT
+ * MOST ONE assessment (quiz/test, database, or web); the kind is derived from
+ * which block is present, never authored. `code:`/`test_code:` are reserved
+ * for the pure-code extension (general-code-exams-plan.md).
+ *
+ * Whether the named runtime is enabled on this site is validated at build
+ * time in lib/content/bundle.ts (schemas can't see astro.config).
+ */
+const databaseBlock = z.object({
+  // Registry id of the database engine ('sqlite' now, 'pglite' later).
+  runtime: z.string().default('sqlite'),
+  // Seeds a fresh in-memory DB on load/reset.
+  initial_sql: z.string(),
+  // The embedded solution: run `query` (authors must ORDER BY), compare the
+  // rows positionally. Omit ⇒ an explorable sandbox completed by submission.
+  desired_state: z
+    .object({
+      query: z.string(),
+      rows: z.array(z.record(z.string(), z.unknown())),
+    })
+    .optional(),
+});
+
+const webBlock = z.object({
+  // Script language for the third tab; 'ts' is transpiled in-browser.
+  lang: z.enum(['js', 'ts']).default('js'),
+  starter: z
+    .object({
+      html: z.string().default(''),
+      css: z.string().default(''),
+      js: z.string().default(''),
+    })
+    .default({}),
+});
+
+/** "At most one assessment block" — shared by lessons and chapters. */
+const atMostOne = (...blocks: unknown[]) => blocks.filter((b) => b !== undefined).length <= 1;
+
 const courses = defineCollection({
   loader: glob({ base, pattern: '*/index.md', generateId }),
   schema: z.object({
@@ -129,12 +168,19 @@ const chapters = defineCollection({
     }),
     // Present ⇒ the chapter ends with a full-page test that gates completion.
     test: z.array(question).min(1).optional(),
+    // Code-based test variants — same object shapes as the lesson blocks.
+    test_database: databaseBlock.optional(),
+    test_web: webBlock.optional(),
     // POST target for test submissions (sent for human marking). NOT secure —
     // answers are baked into the page; see the Course Development Guide.
     result_endpoint: z.string().url().optional(),
-  }).refine((data) => !data.result_endpoint || data.test, {
-    message: 'result_endpoint requires a test to submit',
-  }),
+  })
+    .refine((data) => atMostOne(data.test, data.test_database, data.test_web), {
+      message: 'a chapter may declare at most one of test / test_database / test_web',
+    })
+    .refine((data) => !data.result_endpoint || data.test, {
+      message: 'result_endpoint requires a test to submit',
+    }),
 });
 
 const lessons = defineCollection({
@@ -144,11 +190,18 @@ const lessons = defineCollection({
     title: z.string(),
     // Present ⇒ the lesson is an exercise, completed by submitting the quiz.
     quiz: z.array(question).min(1).optional(),
+    // Code-based exercise variants — at most one assessment block per lesson.
+    database: databaseBlock.optional(),
+    web: webBlock.optional(),
     // POST target for quiz submissions (sent for human marking).
     result_endpoint: z.string().url().optional(),
-  }).refine((data) => !data.result_endpoint || data.quiz, {
-    message: 'result_endpoint requires a quiz to submit',
-  }),
+  })
+    .refine((data) => atMostOne(data.quiz, data.database, data.web), {
+      message: 'a lesson may declare at most one of quiz / database / web',
+    })
+    .refine((data) => !data.result_endpoint || data.quiz, {
+      message: 'result_endpoint requires a quiz to submit',
+    }),
 });
 
 const glossary = defineCollection({

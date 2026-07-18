@@ -92,7 +92,10 @@ async function maybeCompleteChapter(
   if (!chapter || chapter.completed) return;
   const siblings = await Promise.all(chapter.lessons.map((slug) => get<Lessons>('lessons', slug)));
   const lessonsDone = siblings.every((l) => l?.completed);
-  const testDone = !chapter.test || chapter.test.length === 0 || chapter.test_completed != null;
+  // Any test variant (questions, database, web) gates completion the same way.
+  const hasTest =
+    (chapter.test?.length ?? 0) > 0 || chapter.test_database != null || chapter.test_web != null;
+  const testDone = !hasTest || chapter.test_completed != null;
   if (!lessonsDone || !testDone) return;
 
   await put<Chapters>('chapters', { ...chapter, completed: now });
@@ -111,6 +114,7 @@ function clearedLesson(lesson: Lessons): Lessons {
     ...lesson,
     quiz_responses: null,
     quiz_score: null,
+    solution: null,
     started: null,
     completed: null,
   };
@@ -123,6 +127,7 @@ function clearedChapter(chapter: Chapters): Chapters {
     test_responses: null,
     test_score: null,
     test_completed: null,
+    test_solution: null,
     started: null,
     completed: null,
   };

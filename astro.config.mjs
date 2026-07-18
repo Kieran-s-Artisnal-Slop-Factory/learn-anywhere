@@ -29,6 +29,14 @@ const contactEndpoint = '';
 // Applies to every quiz and test on the site; scores may be fractional.
 const partial_grades = false;
 
+// Which code-exercise runtimes this site ships (coding-exams-plan.md). Each
+// entry needs its npm packages installed — `npm run dev`/`build` preflight-
+// check them and print the install command if any are missing. Content that
+// uses a runtime not listed here FAILS THE BUILD. Empty = no code exercises,
+// no playground. Known ids: 'sqlite', 'web'.
+// Exported so scripts/check-runtimes.mjs can read the same list.
+export const runtimes = ['sqlite'];
+
 // https://astro.build/config
 export default defineConfig({
   base:base,
@@ -47,10 +55,15 @@ export default defineConfig({
     remarkPlugins: [[remarkGlossary, { base }]],
   },
   vite: {
+    // Per the sqlite-wasm docs: keep Vite from pre-bundling the WASM loader,
+    // which breaks its worker/asset URL resolution in dev. Harmless when the
+    // sqlite runtime is disabled (the package is simply never imported).
+    optimizeDeps: { exclude: ['@sqlite.org/sqlite-wasm'] },
     // Expose site settings to client code (lib/contact.ts, lib/assessment/config.ts).
     define: {
       'import.meta.env.PUBLIC_CONTACT_ENDPOINT': JSON.stringify(contactEndpoint),
       'import.meta.env.PUBLIC_PARTIAL_GRADES': JSON.stringify(partial_grades),
+      'import.meta.env.PUBLIC_RUNTIMES': JSON.stringify(runtimes),
     },
   },
 });

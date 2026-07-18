@@ -1,6 +1,7 @@
 <script lang="ts">
   import {href} from '../lib/paths';
   import { contactConfigured } from '../lib/contact';
+  import { anyRuntimes } from '../lib/runtimes/config';
   let { currentPath = '/' }: { currentPath?: string } = $props();
   let open = $state(false);
 
@@ -9,6 +10,8 @@
     { href: href('/courses/'), label: 'Courses' },
     { href: href('/flashcards/'), label: 'Flashcards' },
     { href: href('/glossary/'), label: 'Glossary' },
+    // Only when the site enables code runtimes (astro.config `runtimes`).
+    ...(anyRuntimes() ? [{ href: href('/playground/'), label: 'Playground' }] : []),
     // General feedback — only when the site configured a contactEndpoint.
     ...(contactConfigured() ? [{ href: href('/contact/'), label: 'Contact' }] : []),
     { href: href('/settings/'), label: 'Settings' },

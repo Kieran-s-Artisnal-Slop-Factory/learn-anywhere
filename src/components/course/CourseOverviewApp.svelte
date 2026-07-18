@@ -83,7 +83,9 @@
           if (lesson) return { chapter, lesson, test: false };
         }
       }
-      if ((chapter.test?.length ?? 0) > 0 && !chapterRows.get(chapter.slug)?.test_completed) {
+      const chapterHasTest =
+        (chapter.test?.length ?? 0) > 0 || chapter.test_database != null || chapter.test_web != null;
+      if (chapterHasTest && !chapterRows.get(chapter.slug)?.test_completed) {
         return { chapter, lesson: null, test: true };
       }
     }
@@ -191,7 +193,8 @@
     {#each bundle.chapters as chapter, i (chapter.slug)}
       {@const done = chapterDone(chapter)}
       {@const chapterRow = chapterRows.get(chapter.slug)}
-      {@const hasTest = (chapter.test?.length ?? 0) > 0}
+      {@const hasTest =
+        (chapter.test?.length ?? 0) > 0 || chapter.test_database != null || chapter.test_web != null}
       {@const testPct = chapterRow?.test_score ? percent(chapterRow.test_score) : null}
       <Card
         title={`${i + 1}. ${chapter.title}`}

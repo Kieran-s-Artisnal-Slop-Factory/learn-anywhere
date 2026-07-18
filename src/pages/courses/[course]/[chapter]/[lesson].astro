@@ -35,9 +35,11 @@ export async function getStaticPaths() {
         lesson,
         prev: flat[i - 1] ?? null,
         next: flat[i + 1] ?? null,
-        // The last lesson of a chapter with a test points forward to it.
+        // The last lesson of a chapter with a test (any variant) points to it.
         chapterTestNext:
-          chapter.data.test !== undefined &&
+          (chapter.data.test !== undefined ||
+            chapter.data.test_database !== undefined ||
+            chapter.data.test_web !== undefined) &&
           chapter.data.lessons[chapter.data.lessons.length - 1] === lesson.id.split('/').pop(),
         position: {
           index: chapter.data.lessons.findIndex((leaf) => `${chapter.id}/${leaf}` === lesson.id) + 1,
@@ -50,7 +52,18 @@ export async function getStaticPaths() {
 
 const { course, chapter, lesson, prev, next, chapterTestNext, position } = Astro.props;
 const { Content } = await render(lesson);
-const isExercise = lesson.data.quiz !== undefined;
+// Any assessment block gets the two-column workspace layout.
+const hasWorkspace =
+  lesson.data.quiz !== undefined ||
+  lesson.data.database !== undefined ||
+  lesson.data.web !== undefined;
+const kindLabel = lesson.data.quiz
+  ? 'Exercise'
+  : lesson.data.database
+    ? 'Database exercise'
+    : lesson.data.web
+      ? 'Web exercise'
+      : 'Reading';
 const courseHref = href(`/courses/${course.id}/`);
 const chapterHref = href(`/courses/${chapter.id}/`);
 const coursePayload = courseContent(course);
@@ -67,11 +80,11 @@ const lessonPayload = await lessonContent(lesson);
   <div class="page-header">
     <h1>{lesson.data.title}</h1>
     <span class="muted">
-      {isExercise ? 'Exercise' : 'Reading'} · Lesson {position.index} of {position.total} · {chapter.data.title}
+      {kindLabel} · Lesson {position.index} of {position.total} · {chapter.data.title}
     </span>
   </div>
 
-  <div class="lesson-layout" class:list={[{ 'prose-only': !isExercise }]}>
+  <div class="lesson-layout" class:list={[{ 'prose-only': !hasWorkspace }]}>
     <div class="instructions">
       <div class="prose">
         <Content />

@@ -25,6 +25,15 @@ const MIGRATIONS: Migration[] = [
       }
     }
   },
+  // v2 — add the `playground` store: one row per code runtime holding that
+  // playground's editor buffer(s) and an optional saved snapshot (e.g. a SQL
+  // dump re-run on load). Local-only scratch, deliberately kept out of the
+  // STORES map so the content-sync and export/import flows never touch it.
+  (db) => {
+    if (!db.objectStoreNames.contains('playground')) {
+      db.createObjectStore('playground', { keyPath: 'id' });
+    }
+  },
 ];
 
 export const DB_VERSION = MIGRATIONS.length;

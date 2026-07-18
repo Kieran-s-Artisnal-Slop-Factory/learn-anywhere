@@ -1,0 +1,15 @@
+---
+// The playground — interactive environments for every enabled code runtime
+// (SQLite, web preview, …), with a tab switcher when there's more than one.
+// Always built; the island self-explains when no runtimes are enabled, and
+// the navbar only links here when at least one is (same pattern as Contact).
+import Layout from '../layouts/Layout.astro';
+import PlaygroundApp from '../components/playground/PlaygroundApp.svelte';
+---
+
+<Layout title="Playground">
+  <div class="page-header">
+    <h1>Playground</h1>
+  </div>
+  <PlaygroundApp client:only="svelte" />
+</Layout>

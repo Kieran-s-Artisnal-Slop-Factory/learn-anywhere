@@ -14,7 +14,12 @@ export async function getStaticPaths() {
   return trees.flatMap((tree) =>
     tree.chapters
       .map(({ chapter }, i) => ({ chapter, next: tree.chapters[i + 1]?.chapter ?? null }))
-      .filter(({ chapter }) => chapter.data.test !== undefined)
+      .filter(
+        ({ chapter }) =>
+          chapter.data.test !== undefined ||
+          chapter.data.test_database !== undefined ||
+          chapter.data.test_web !== undefined
+      )
       .map(({ chapter, next }) => ({
         params: { course: tree.course.id, chapter: chapter.id.split('/').pop()! },
         props: { course: tree.course, chapter, nextChapter: next },
@@ -24,6 +29,12 @@ export async function getStaticPaths() {
 
 const { course, chapter, nextChapter } = Astro.props;
 const questionCount = chapter.data.test?.length ?? 0;
+const meta =
+  chapter.data.test !== undefined
+    ? `${questionCount} question${questionCount === 1 ? '' : 's'}`
+    : chapter.data.test_database !== undefined
+      ? 'Database test'
+      : 'Web test';
 const chapterPayload = await chapterContent(chapter);
 ---
 
@@ -35,7 +46,7 @@ const chapterPayload = await chapterContent(chapter);
   </nav>
   <div class="page-header">
     <h1>Chapter test: {chapter.data.title}</h1>
-    <span class="muted">{questionCount} question{questionCount === 1 ? '' : 's'}</span>
+    <span class="muted">{meta}</span>
   </div>
 
   <TestApp

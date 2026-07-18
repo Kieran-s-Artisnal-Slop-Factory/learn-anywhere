@@ -20,6 +20,7 @@
   import type { Lessons } from '../../lib/db/types';
   import Card from '../Card.svelte';
   import AssessmentForm from '../assessment/AssessmentForm.svelte';
+  import DatabaseExercise from './DatabaseExercise.svelte';
 
   let {
     course,
@@ -56,6 +57,21 @@
     row = await markLessonCompleted(course.slug, chapter.slug, $state.snapshot(row) as Lessons);
   }
 
+  /** Database exercise: persist the SQL buffer ('' clears). */
+  async function saveSolution(sqlText: string) {
+    if (!row) return;
+    row = await put<Lessons>('lessons', {
+      ...($state.snapshot(row) as Lessons),
+      solution: sqlText === '' ? null : sqlText,
+    });
+  }
+
+  /** Database exercise: a passing check (or sandbox mark-done) completes. */
+  async function completeLesson() {
+    if (!row) return;
+    row = await markLessonCompleted(course.slug, chapter.slug, $state.snapshot(row) as Lessons);
+  }
+
   onMount(async () => {
     try {
       await syncCourse($state.snapshot(course));
@@ -84,7 +100,25 @@
     </p>
   {/if}
 
-  {#if isExercise && lesson.quiz}
+  {#if lesson.kind === 'database' && lesson.database}
+    {#if booting}
+      <p class="muted">Loading…</p>
+    {:else}
+      <DatabaseExercise
+        block={lesson.database}
+        initialSolution={typeof row?.solution === 'string' ? row.solution : null}
+        {completed}
+        onSave={saveSolution}
+        onPass={completeLesson}
+        onMarkDone={completeLesson}
+      />
+    {/if}
+  {:else if lesson.kind === 'web'}
+    <!-- Transitional: the web exercise island lands in Web Phase 1. -->
+    <p class="banner banner-warning">
+      This lesson uses the <strong>web</strong> exercise type, which isn't implemented yet.
+    </p>
+  {:else if isExercise && lesson.quiz}
     <Card title="Quiz">
       {#snippet actions()}
         <span class="muted count">{lesson.quiz.length} question{lesson.quiz.length === 1 ? '' : 's'}</span>

@@ -32,7 +32,8 @@
 
   const href = (slug: string) => linkCorrector(`/courses/${slug}/`);
 
-  const hasTest = (chapter.test?.length ?? 0) > 0;
+  const hasTest =
+    (chapter.test?.length ?? 0) > 0 || chapter.test_database != null || chapter.test_web != null;
   const done = $derived([...lessonRows.values()].filter((l) => l.completed).length);
   const testPct = $derived(chapterRow?.test_score ? percent(chapterRow.test_score) : null);
   const continueLesson = $derived(

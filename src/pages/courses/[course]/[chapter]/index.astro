@@ -26,7 +26,9 @@ const { course, chapter, lessons, position } = Astro.props;
 const { Content } = await render(chapter);
 const chapterPayload = await chapterContent(chapter);
 const lessonPayloads = await Promise.all(lessons.map(lessonContent));
-const exerciseCount = lessons.filter((l) => l.data.quiz !== undefined).length;
+const exerciseCount = lessons.filter(
+  (l) => l.data.quiz !== undefined || l.data.database !== undefined || l.data.web !== undefined
+).length;
 const readingCount = lessons.length - exerciseCount;
 const hasTest = chapter.data.test !== undefined;
 ---

@@ -15,6 +15,7 @@
   import { put } from '../../lib/db/repo';
   import type { Chapters } from '../../lib/db/types';
   import AssessmentForm from './AssessmentForm.svelte';
+  import DatabaseExercise from '../exercise/DatabaseExercise.svelte';
 
   let {
     course,
@@ -39,6 +40,21 @@
       test_score: score,
     });
     row = await markTestCompleted(course.slug, saved);
+  }
+
+  /** Database test: persist the SQL buffer on the chapter row ('' clears). */
+  async function saveTestSolution(sqlText: string) {
+    if (!row) return;
+    row = await put<Chapters>('chapters', {
+      ...($state.snapshot(row) as Chapters),
+      test_solution: sqlText === '' ? null : sqlText,
+    });
+  }
+
+  /** Database test: a passing check (or sandbox mark-done) completes it. */
+  async function completeDatabaseTest() {
+    if (!row) return;
+    row = await markTestCompleted(course.slug, $state.snapshot(row) as Chapters);
   }
 
   onMount(async () => {
@@ -71,6 +87,15 @@
 
   {#if booting}
     <p class="muted">Loading…</p>
+  {:else if chapter.test_database}
+    <DatabaseExercise
+      block={chapter.test_database}
+      initialSolution={typeof row?.test_solution === 'string' ? row.test_solution : null}
+      completed={taken}
+      onSave={saveTestSolution}
+      onPass={completeDatabaseTest}
+      onMarkDone={completeDatabaseTest}
+    />
   {:else if chapter.test}
     <AssessmentForm
       questions={chapter.test}
