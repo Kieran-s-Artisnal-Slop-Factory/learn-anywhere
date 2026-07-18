@@ -485,13 +485,12 @@
         </div>
       {/snippet}
       <div class="frame-wrap">
-        <iframe
-          bind:this={frame}
-          title="Page preview"
-          sandbox="allow-scripts"
-          class="preview"
-          style={viewportWidth ? `width: ${viewportWidth}px; max-width: 100%;` : ''}
-        ></iframe>
+        <!-- Drag the corner handle to resize freely; clicking a viewport
+             preset rewrites the style attribute, which resets the drag. -->
+        <div class="resize-box" style={viewportWidth ? `width: ${viewportWidth}px;` : ''}>
+          <iframe bind:this={frame} title="Page preview" sandbox="allow-scripts" class="preview"
+          ></iframe>
+        </div>
       </div>
       {#if consoleMsgs.length > 0}
         <div class="console">
@@ -623,13 +622,31 @@
     justify-content: center;
     background: var(--surface-raised-color);
     border-radius: var(--radius-md);
+    /* A dragged-out preview scrolls here instead of blowing up the card. */
+    overflow: auto;
+  }
+
+  /* Directly resizable in both directions via the corner handle. Deliberately
+     NOT capped at the container width — overflowing is sometimes the point;
+     .frame-wrap scrolls it. */
+  .resize-box {
+    resize: both;
+    overflow: hidden;
+    flex-shrink: 0; /* let a drag exceed the container; .frame-wrap scrolls */
+    width: 100%;
+    height: 24rem;
+    min-width: 10rem;
+    min-height: 6rem;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    background: #fff;
   }
 
   .preview {
+    display: block;
     width: 100%;
-    height: 24rem;
-    border: 1px solid var(--border-color);
-    border-radius: var(--radius-md);
+    height: 100%;
+    border: none;
     background: #fff;
   }
 

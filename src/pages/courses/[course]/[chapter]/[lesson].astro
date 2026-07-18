@@ -84,6 +84,16 @@ const lessonPayload = await lessonContent(lesson);
     </span>
   </div>
 
+  {
+    hasWorkspace && (
+      <div class="collapse-row">
+        <button type="button" class="btn btn-sm" id="collapse-content" aria-expanded="true">
+          Hide lesson content
+        </button>
+      </div>
+    )
+  }
+
   <div class="lesson-layout" class:list={[{ 'prose-only': !hasWorkspace }]}>
     <div class="instructions">
       <div class="prose">
@@ -131,9 +141,39 @@ const lessonPayload = await lessonContent(lesson);
   </nav>
 
   <FeedbackButton client:only="svelte" title={lesson.data.title} />
+
+  <script is:inline>
+    // Collapse the lesson prose so the quiz/editor gets the full width.
+    // Choice is remembered across lessons (localStorage), applied pre-paint.
+    (() => {
+      const KEY = 'learn-anywhere-collapse-lesson-content';
+      const button = document.getElementById('collapse-content');
+      const layout = document.querySelector('.lesson-layout');
+      if (!button || !layout) return;
+      const apply = (collapsed) => {
+        layout.classList.toggle('content-collapsed', collapsed);
+        button.textContent = collapsed ? 'Show lesson content' : 'Hide lesson content';
+        button.setAttribute('aria-expanded', String(!collapsed));
+      };
+      apply(localStorage.getItem(KEY) === '1');
+      button.addEventListener('click', () => {
+        const collapsed = !layout.classList.contains('content-collapsed');
+        try {
+          localStorage.setItem(KEY, collapsed ? '1' : '0');
+        } catch {}
+        apply(collapsed);
+      });
+    })();
+  </script>
 </Layout>
 
 <style>
+  .collapse-row {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: var(--space-3);
+  }
+
   .lesson-layout {
     display: grid;
     grid-template-columns: minmax(0, 1fr);
@@ -141,8 +181,13 @@ const lessonPayload = await lessonContent(lesson);
     align-items: start;
   }
 
+  /* Collapsed: hide the prose, let the workspace take the full width. */
+  .lesson-layout.content-collapsed .instructions {
+    display: none;
+  }
+
   @media (min-width: 64rem) {
-    .lesson-layout:not(.prose-only) {
+    .lesson-layout:not(.prose-only):not(.content-collapsed) {
       grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
     }
 
