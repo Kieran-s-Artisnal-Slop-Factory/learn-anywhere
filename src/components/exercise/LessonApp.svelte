@@ -21,6 +21,7 @@
   import Card from '../Card.svelte';
   import AssessmentForm from '../assessment/AssessmentForm.svelte';
   import DatabaseExercise from './DatabaseExercise.svelte';
+  import WebExercise from './WebExercise.svelte';
 
   let {
     course,
@@ -63,6 +64,15 @@
     row = await put<Lessons>('lessons', {
       ...($state.snapshot(row) as Lessons),
       solution: sqlText === '' ? null : sqlText,
+    });
+  }
+
+  /** Web exercise: persist the three tab buffers. */
+  async function saveWebSolution(buffers: Record<string, string>) {
+    if (!row) return;
+    row = await put<Lessons>('lessons', {
+      ...($state.snapshot(row) as Lessons),
+      solution: buffers,
     });
   }
 
@@ -115,11 +125,23 @@
         meta={{ kind: 'quiz', slug: lesson.slug, title: lesson.title }}
       />
     {/if}
-  {:else if lesson.kind === 'web'}
-    <!-- Transitional: the web exercise island lands in Web Phase 1. -->
-    <p class="banner banner-warning">
-      This lesson uses the <strong>web</strong> exercise type, which isn't implemented yet.
-    </p>
+  {:else if lesson.kind === 'web' && lesson.web}
+    {#if booting}
+      <p class="muted">Loading…</p>
+    {:else}
+      <WebExercise
+        block={lesson.web}
+        initialSolution={row?.solution != null && typeof row.solution === 'object'
+          ? (row.solution as Record<string, string>)
+          : null}
+        {completed}
+        onSave={saveWebSolution}
+        onSubmit={completeLesson}
+        endpoint={lesson.result_endpoint ?? null}
+        meta={{ kind: 'quiz', slug: lesson.slug, title: lesson.title }}
+        exportName={lesson.slug.split('/').pop() ?? 'my-page'}
+      />
+    {/if}
   {:else if isExercise && lesson.quiz}
     <Card title="Quiz">
       {#snippet actions()}

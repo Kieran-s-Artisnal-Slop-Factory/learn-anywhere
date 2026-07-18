@@ -35,7 +35,7 @@ const partial_grades = false;
 // uses a runtime not listed here FAILS THE BUILD. Empty = no code exercises,
 // no playground. Known ids: 'sqlite', 'web'.
 // Exported so scripts/check-runtimes.mjs can read the same list.
-export const runtimes = ['sqlite'];
+export const runtimes = ['sqlite', 'web'];
 
 // https://astro.build/config
 export default defineConfig({

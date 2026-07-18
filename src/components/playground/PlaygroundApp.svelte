@@ -15,6 +15,7 @@
    */
   const PLAYGROUNDS: Record<string, () => Promise<Component<{ runtimeId: string }>>> = {
     sqlite: () => import('./SqlitePlayground.svelte').then((m) => m.default),
+    web: () => import('./WebPlayground.svelte').then((m) => m.default),
   };
 
   const tabs = RUNTIMES.map((id) => ({

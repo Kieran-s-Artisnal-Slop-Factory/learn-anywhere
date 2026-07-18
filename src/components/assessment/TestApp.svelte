@@ -16,6 +16,7 @@
   import type { Chapters } from '../../lib/db/types';
   import AssessmentForm from './AssessmentForm.svelte';
   import DatabaseExercise from '../exercise/DatabaseExercise.svelte';
+  import WebExercise from '../exercise/WebExercise.svelte';
 
   let {
     course,
@@ -51,10 +52,19 @@
     });
   }
 
-  /** Database test: a passing check (or sandbox mark-done) completes it. */
-  async function completeDatabaseTest() {
+  /** Code test (database check pass / web submit) — stamps test_completed. */
+  async function completeCodeTest() {
     if (!row) return;
     row = await markTestCompleted(course.slug, $state.snapshot(row) as Chapters);
+  }
+
+  /** Web test: persist the three tab buffers on the chapter row. */
+  async function saveWebTestSolution(buffers: Record<string, string>) {
+    if (!row) return;
+    row = await put<Chapters>('chapters', {
+      ...($state.snapshot(row) as Chapters),
+      test_solution: buffers,
+    });
   }
 
   onMount(async () => {
@@ -93,10 +103,24 @@
       initialSolution={typeof row?.test_solution === 'string' ? row.test_solution : null}
       completed={taken}
       onSave={saveTestSolution}
-      onPass={completeDatabaseTest}
-      onMarkDone={completeDatabaseTest}
+      onPass={completeCodeTest}
+      onMarkDone={completeCodeTest}
       endpoint={chapter.result_endpoint ?? null}
       meta={{ kind: 'test', slug: chapter.slug, title: chapter.title }}
+    />
+  {:else if chapter.test_web}
+    <WebExercise
+      block={chapter.test_web}
+      initialSolution={row?.test_solution != null && typeof row.test_solution === 'object'
+        ? (row.test_solution as Record<string, string>)
+        : null}
+      completed={taken}
+      onSave={saveWebTestSolution}
+      onSubmit={completeCodeTest}
+      endpoint={chapter.result_endpoint ?? null}
+      meta={{ kind: 'test', slug: chapter.slug, title: chapter.title }}
+      wide={true}
+      exportName={`${chapter.slug.split('/').pop() ?? 'test'}-test`}
     />
   {:else if chapter.test}
     <AssessmentForm

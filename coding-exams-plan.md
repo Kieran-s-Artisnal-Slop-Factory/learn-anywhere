@@ -334,6 +334,16 @@ chapter test, and everything survives reload + offline.
 
 ### Phase 1: initial implementation
 
+> **Status: ✅ complete.** Verified in-browser: three-tab workspace (all
+> editors stay mounted so undo/history survive tab switches), sandboxed
+> srcdoc preview live-updating on a 500 ms debounce, Emmet `ul>li*3` + Tab
+> expansion, Sucrase type-stripping on a `lang: ts` test (interface gone,
+> code intact; compile errors banner instead of breaking the preview),
+> buffers autosave/restore across reloads, Submit work completes lesson and
+> chapter test (cascade included), Reset-to-starter. Demo content in
+> `src/content/courses/8.web-demo/`. Sucrase is lazy-imported so JS lessons
+> never pay for it.
+
 Goal: a three-tab editor + live preview lesson you can play with; work is
 stored; no evaluation.
 
@@ -375,6 +385,17 @@ expansions), watch the preview live-update, TS variant transpiles, work
 survives reload, submitting completes the lesson.
 
 ### Phase 2: polish
+
+> **Status: ✅ complete.** Verified in-browser: zip export (standalone
+> index.html linking styles.css/script.js, + original .ts when applicable),
+> viewport & full-page PNG screenshots via modern-screenshot (rendered into
+> a temporary same-origin iframe since the live preview's sandbox blocks DOM
+> access; honors the active viewport preset), console strip (sandboxed shim
+> → postMessage), Refresh button, Full/Tablet/Mobile presets, side-by-side
+> layout on test/playground pages, result_endpoint POSTing
+> solution_html/css/js with the profile gate, and the Web playground tab
+> with per-runtime persistence. Deferred: resizable divider (presets cover
+> the need).
 
 - **Export as zip**: `fflate` (tiny, tree-shakeable) — `index.html`,
   `styles.css`, `script.js` (post-transpile + original `.ts` when applicable).

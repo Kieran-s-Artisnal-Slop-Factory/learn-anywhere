@@ -191,9 +191,10 @@ const chapters = defineCollection({
     .refine((data) => atMostOne(data.test, data.test_database, data.test_web), {
       message: 'a chapter may declare at most one of test / test_database / test_web',
     })
-    .refine((data) => !data.result_endpoint || data.test || data.test_database, {
-      message: 'result_endpoint requires a test or test_database to submit',
-    }),
+    .refine(
+      (data) => !data.result_endpoint || data.test || data.test_database || data.test_web,
+      { message: 'result_endpoint requires a test / test_database / test_web to submit' }
+    ),
 });
 
 const lessons = defineCollection({
@@ -212,8 +213,8 @@ const lessons = defineCollection({
     .refine((data) => atMostOne(data.quiz, data.database, data.web), {
       message: 'a lesson may declare at most one of quiz / database / web',
     })
-    .refine((data) => !data.result_endpoint || data.quiz || data.database, {
-      message: 'result_endpoint requires a quiz or database exercise to submit',
+    .refine((data) => !data.result_endpoint || data.quiz || data.database || data.web, {
+      message: 'result_endpoint requires a quiz, database, or web exercise to submit',
     }),
 });
 
