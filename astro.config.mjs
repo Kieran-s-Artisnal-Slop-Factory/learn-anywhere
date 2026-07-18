@@ -2,6 +2,8 @@
 import { defineConfig } from 'astro/config';
 
 import svelte from '@astrojs/svelte';
+import remarkMath from 'remark-math';
+import rehypeKatex from 'rehype-katex';
 import { remarkGlossary } from './src/lib/glossary/remark-glossary.mjs';
 
 // Change the `/` to a different URL if you're serving the site from a path other than root
@@ -52,7 +54,10 @@ export default defineConfig({
     // [[term]] / [[term|display]] → glossary popup links. The plugin reads
     // src/content/glossary at config-load time, so restart the dev server
     // after adding or renaming a term.
-    remarkPlugins: [[remarkGlossary, { base }]],
+    // remark-math + rehype-katex: $inline$ and $$block$$ math, rendered to
+    // KaTeX HTML at build time (Layout.astro ships the KaTeX stylesheet).
+    remarkPlugins: [[remarkGlossary, { base }], remarkMath],
+    rehypePlugins: [rehypeKatex],
   },
   vite: {
     // Per the sqlite-wasm docs: keep Vite from pre-bundling the WASM loader,

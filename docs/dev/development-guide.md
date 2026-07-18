@@ -308,3 +308,22 @@ npm run build    # the content-validation gate — schema, wiring, and glossary 
 The grader and resolver are deliberately pure so they test without a browser
 or `astro:content`. Everything else is validated by the build and by manual
 dev-server passes.
+
+## Exporting to Learn Anywhere Builder
+
+```sh
+npm run export:builder   # → <site-id>.learn-anywhere-builder.json (gitignored)
+# options: -- --id my-site --title "My Site" --out path/to/file.json
+```
+
+`scripts/export-to-builder.mjs` packages this site's content as a Learn
+Anywhere Builder project file (envelope v2) that the builder's import
+accepts. It reads courses/flashcards/glossary frontmatter as authored (run
+`npm run build` first — that's the validator), pulls settings from
+`astro.config.mjs` (plus the `BASE`/`SITE` env vars) and the site name and
+description from `public/manifest.webmanifest`. The theme exports as the
+default palette when it's a built-in; anything unrecognized inherits the
+builder's `boring` base with the palette's `--pal-*` values carried over as
+per-slot overrides. Co-located images are re-homed to the builder's
+`<course>/images/` layout with markdown refs rewritten to match (the rewrite
+is regex-based, so example refs inside code fences are rewritten too).
