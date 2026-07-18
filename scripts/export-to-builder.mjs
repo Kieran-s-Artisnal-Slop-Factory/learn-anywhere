@@ -13,6 +13,9 @@
  *     base/site come from the BASE/SITE env vars, like the config itself)
  *   - src/lib/palette.ts for the default palette; public/manifest.webmanifest
  *     for the site's name/description
+
+ * The built-in "Platform walkthrough" course (0.platform-walkthrough) is
+ * skipped — it belongs to the platform, not the site's authors.
  *
  * Theme mapping: the builder models a theme as a base palette + sparse
  * `--pal-*` overrides. A site whose default palette is one of the built-ins
@@ -247,8 +250,12 @@ async function main() {
     argValue('--id') ??
     siteTitle.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
 
+  // The built-in interface-tutorials course (interfaceTutorials in
+  // astro.config.mjs) is platform content, not authored content — never
+  // export it, whatever the flags say.
+  const WALKTHROUGH_COURSE_ID = '0.platform-walkthrough';
   const courseSlugs = (await listDir(path.join(contentDir, 'courses')))
-    .filter((e) => e.isDirectory())
+    .filter((e) => e.isDirectory() && e.name !== WALKTHROUGH_COURSE_ID)
     .map((e) => e.name)
     .sort();
   if (courseSlugs.length === 0) throw new Error('no courses found under src/content/courses');

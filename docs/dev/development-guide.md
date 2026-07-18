@@ -336,7 +336,9 @@ npm run export:builder   # → <site-id>.learn-anywhere-builder.json (gitignored
 
 `scripts/export-to-builder.mjs` packages this site's content as a Learn
 Anywhere Builder project file (envelope v2) that the builder's import
-accepts. It reads courses/flashcards/glossary frontmatter as authored (run
+accepts. The built-in Platform walkthrough course is always skipped —
+platform content, not the site's own. It reads courses/flashcards/glossary
+frontmatter as authored (run
 `npm run build` first — that's the validator), pulls settings from
 `astro.config.mjs` (plus the `BASE`/`SITE` env vars) and the site name and
 description from `public/manifest.webmanifest`. The theme exports as the
