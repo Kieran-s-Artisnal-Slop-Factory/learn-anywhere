@@ -9,7 +9,7 @@
   }: { currentPath?: string; hasFlashcards?: boolean; hasGlossary?: boolean } = $props();
   let open = $state(false);
 
-  const links = [
+  const links = $derived([
     { href: href('/'), label: 'Home' },
     { href: href('/courses/'), label: 'Courses' },
     // Only when the site ships any flashcard decks (build-time count).
@@ -21,7 +21,7 @@
     // General feedback — only when the site configured a contactEndpoint.
     ...(contactConfigured() ? [{ href: href('/contact/'), label: 'Contact' }] : []),
     { href: href('/settings/'), label: 'Settings' },
-  ];
+  ]);
 
   const normalize = (p: string) => p.replace(/\/+$/, '') || '/';
   // Section-aware: /courses/… keeps Courses highlighted. Home is the base

@@ -23,7 +23,8 @@ If you have any of the following requirements, you may be better off looking for
 ## Features
 
 - **Courses → chapters → lessons** authored as plain markdown with validated
-  frontmatter (content collections)
+  frontmatter (content collections), including optimized images, KaTeX math,
+  and Mermaid diagrams
 - **Quizzes** inside lessons and **tests** at the end of chapters, both built
   from the same question types:
   - multiple choice (a–e), with per-question "All of the above" / "None of the
@@ -72,6 +73,7 @@ If you have any of the following requirements, you may be better off looking for
   courses, quizzes, tests, glossary terms, and flashcards
 - [Adding images](docs/user/images.md) — co-located images, optimization, and
   the `public/` caveat
+- [Diagrams](docs/user/diagrams.md) — Mermaid diagrams in markdown bodies
 - [Runtimes](docs/user/runtimes.md) — enabling code-exercise engines per site
 - [Database exercises](docs/user/database-exercises.md) ·
   [Web exercises](docs/user/web-exercises.md)

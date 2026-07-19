@@ -43,6 +43,13 @@ The build fails on a listed child that doesn't exist and on files no parent
 lists — broken wiring can't ship. (Only `.md` files are content: images and
 other assets can sit beside lessons freely — see [images.md](images.md).)
 
+## What a body can contain
+
+Bodies are standard markdown plus four platform extras: `[[glossary refs]]`
+(see below), co-located [images](images.md), `$math$` / `$$math$$` rendered
+with KaTeX, and [Mermaid diagrams](diagrams.md) in ```` ```mermaid ````
+fenced blocks.
+
 ## Lessons: readings and exercises
 
 A lesson's markdown body is the left-hand prose. Its kind is derived:

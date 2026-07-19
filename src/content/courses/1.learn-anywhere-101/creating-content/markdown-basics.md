@@ -19,6 +19,14 @@ quiz:
       - A link labelled "label"
       - A footnote
     answer: 2
+  - type: multiple_choice
+    prompt: How do you add a diagram to a lesson?
+    options:
+      - Upload an SVG and link to it
+      - "Write it in a fenced code block tagged `mermaid`"
+      - Use the `diagram:` frontmatter field
+      - Diagrams aren't supported
+    answer: 1
   - type: multi_select
     prompt: Select which produce *emphasis* and **strong** text?
     options:
@@ -84,6 +92,35 @@ renders as:
 
 (The image file lives beside this lesson's `.md`; image files aren't
 content, so they don't need wiring into any list.)
+
+## Diagrams
+
+A fenced code block tagged `mermaid` becomes a **diagram** — written as
+text, so it lives in version control and restyles itself for light and dark
+mode:
+
+````markdown
+```mermaid
+flowchart LR
+  A[Lesson] --> B{Has a quiz?}
+  B -- yes --> C[Exercise]
+  B -- no --> D[Reading]
+```
+````
+
+renders as:
+
+```mermaid
+flowchart LR
+  A[Lesson] --> B{Has a quiz?}
+  B -- yes --> C[Exercise]
+  B -- no --> D[Reading]
+```
+
+Flowcharts, sequence diagrams, state diagrams, pie charts, Gantt charts and
+more are available — see [mermaid.js.org](https://mermaid.js.org/) for the
+full syntax. Diagrams render in the reader's browser and work offline like
+everything else.
 
 And remember the split: the markdown *body* is prose; everything structured —
 titles, quizzes, ordering — lives in the frontmatter above it, which the next

@@ -2,6 +2,7 @@
 import { defineConfig } from 'astro/config';
 
 import svelte from '@astrojs/svelte';
+import mermaid from 'astro-mermaid';
 import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
 import { remarkGlossary } from './src/lib/glossary/remark-glossary.mjs';
@@ -50,11 +51,24 @@ const interfaceTutorials = {
   quizes: false, // Include an interface walkthrough for standard quizzes (multiple choice, short/long answer, numerical answers etc.)
 };
 
+// ```mermaid fenced blocks render as diagrams (docs/user/diagrams.md). The
+// renderer is bundled, not fetched from a CDN, so diagrams work offline —
+// but it adds ~3.5 MB of build output that the service worker precaches on
+// every site, whether or not any content uses a diagram. Set this to false
+// if your courses have no diagrams and you want the smallest possible
+// offline download.
+const mermaidDiagrams = true;
+
 // https://astro.build/config
 export default defineConfig({
   base:base,
   site:site,
-  integrations: [svelte()],
+  integrations: [
+    svelte(),
+    // autoTheme follows `data-theme` on <html>, which Layout.astro keeps in
+    // sync with the effective light/dark scheme (pinned or OS).
+    ...(mermaidDiagrams ? [mermaid({ theme: 'default', autoTheme: true })] : []),
+  ],
   markdown: {
     // Dual gruvbox themes; defaultColor:false emits --shiki-light/--shiki-dark
     // variables and Layout.astro's CSS picks one based on the active scheme.

@@ -64,6 +64,15 @@
     if (value === 'auto') localStorage.removeItem(THEME_KEY);
     else localStorage.setItem(THEME_KEY, value);
     document.documentElement.style.colorScheme = value === 'auto' ? '' : value;
+    // data-theme names the effective scheme (see Layout.astro): keeping it
+    // current switches Shiki code colours and mermaid diagrams immediately,
+    // without a reload.
+    document.documentElement.dataset.theme =
+      value === 'auto'
+        ? window.matchMedia('(prefers-color-scheme: dark)').matches
+          ? 'dark'
+          : 'light'
+        : value;
   }
 
   async function persist() {

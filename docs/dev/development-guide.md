@@ -29,6 +29,7 @@ quizzes, taking tests, tracking progress — happens client-side.
 | Grading           | a pure TypeScript module (`lib/assessment/grade.ts`), unit-tested                       |
 | Local storage     | **IndexedDB** via [`idb`](https://github.com/jakearchibald/idb)                         |
 | Glossary links    | a **remark plugin** (`lib/glossary/remark-glossary.mjs`) + a vanilla popover script     |
+| Math & diagrams   | **remark-math + rehype-katex** (build time) and **astro-mermaid** (client-side render)   |
 | Offline           | a hand-written **service worker** + web app manifest (installable PWA)                  |
 | Tests             | **vitest** (the grader and the content resolver)                                        |
 
@@ -305,6 +306,37 @@ tokens that reference only `--pal-*`.
 Palette and light/dark pins are stored in localStorage
 (`learn-anywhere-theme` / `learn-anywhere-palette`) and applied by
 `Layout.astro` before first paint.
+
+`data-theme` on `<html>` always names the **effective** scheme — the pin
+when there is one, otherwise the OS preference, kept current by a
+`matchMedia` listener (and by `SettingsApp.setTheme` when the visitor
+changes it). Most styling doesn't need it because `light-dark()` resolves
+from `color-scheme`; it exists for the consumers that can't: Shiki's dual
+`--shiki-light`/`--shiki-dark` variables and astro-mermaid's `autoTheme`,
+which re-renders diagrams when the attribute changes. Keep it accurate —
+setting only `style.colorScheme` leaves code blocks and diagrams on the
+old theme until reload.
+
+### Diagrams (astro-mermaid)
+
+`astro-mermaid` is registered in `astro.config.mjs` behind the
+`mermaidDiagrams` const. It hooks the markdown pipeline (turning
+```` ```mermaid ```` blocks into `<pre class="mermaid">`) and injects a page
+script that lazily `import()`s mermaid **only when a page actually contains
+a diagram**, then renders each block to inline SVG and re-renders on
+`data-theme` changes.
+
+Two consequences worth knowing:
+
+- The renderer is bundled rather than CDN-loaded (offline-first), and the
+  service worker's asset crawl follows the dynamic-import chunk, so it is
+  precached on every site — measured at ~3.5 MB of `dist/_astro` (3.6 MB →
+  7.1 MB) even for sites with no diagrams. That's what the
+  `mermaidDiagrams = false` escape hatch is for.
+- The transform lives in the *page* markdown pipeline only. Question
+  prompts, flashcard faces, and test `instructions` go through
+  `lib/content/markdown.ts`, which doesn't include it — documented as a
+  limitation in [diagrams.md](../user/diagrams.md).
 
 ## Persistence, backups & migrations
 

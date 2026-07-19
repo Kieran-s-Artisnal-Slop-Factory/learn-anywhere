@@ -38,14 +38,23 @@ const swPath = href('/sw.js');
     <script is:inline>
       // Apply the manual theme override before first paint to avoid a flash.
       // 'light'/'dark' pin the scheme; anything else follows the OS setting.
-      // data-theme lets CSS that can't use light-dark() (e.g. Shiki's dual
-      // highlight variables) follow the same pin.
+      // data-theme always names the EFFECTIVE scheme (pin or OS) so consumers
+      // that can't use light-dark() — Shiki's dual highlight variables,
+      // astro-mermaid's autoTheme — follow along in both cases.
       try {
         const theme = localStorage.getItem('learn-anywhere-theme');
-        if (theme === 'light' || theme === 'dark') {
-          document.documentElement.style.colorScheme = theme;
-          document.documentElement.dataset.theme = theme;
-        }
+        const pinned = theme === 'light' || theme === 'dark';
+        if (pinned) document.documentElement.style.colorScheme = theme;
+        const dark = window.matchMedia('(prefers-color-scheme: dark)');
+        const applyScheme = () => {
+          document.documentElement.dataset.theme = pinned
+            ? theme
+            : dark.matches
+              ? 'dark'
+              : 'light';
+        };
+        applyScheme();
+        if (!pinned) dark.addEventListener('change', applyScheme);
         // 'boring' ships as the static default; only a different stored
         // choice rewrites it. Gruvbox is theme.css's attribute-less base.
         const palette = localStorage.getItem('learn-anywhere-palette');
