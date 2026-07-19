@@ -4,8 +4,14 @@ import '../styles/global.css';
 // KaTeX styles for $math$ rendered by rehype-katex (astro.config markdown +
 // lib/content/markdown.ts fragments).
 import 'katex/dist/katex.min.css';
+import { getCollection } from 'astro:content';
 import { href } from '../lib/paths';
 import Navbar from '../components/Navbar.svelte';
+
+// The Flashcards/Glossary nav links only make sense when the site ships any
+// decks/terms — resolved at build time and passed down as plain props.
+const hasFlashcards = (await getCollection('flashcards')).length > 0;
+const hasGlossary = (await getCollection('glossary')).length > 0;
 
 interface Props {
   title: string;
@@ -52,7 +58,7 @@ const swPath = href('/sw.js');
     </script>
   </head>
   <body>
-    <Navbar client:load {currentPath} />
+    <Navbar client:load {currentPath} {hasFlashcards} {hasGlossary} />
     <main class="page">
       <slot />
     </main>

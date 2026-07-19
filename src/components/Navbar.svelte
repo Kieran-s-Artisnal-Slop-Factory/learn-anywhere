@@ -2,14 +2,20 @@
   import {href} from '../lib/paths';
   import { contactConfigured } from '../lib/contact';
   import { anyRuntimes } from '../lib/runtimes/config';
-  let { currentPath = '/' }: { currentPath?: string } = $props();
+  let {
+    currentPath = '/',
+    hasFlashcards = true,
+    hasGlossary = true,
+  }: { currentPath?: string; hasFlashcards?: boolean; hasGlossary?: boolean } = $props();
   let open = $state(false);
 
   const links = [
     { href: href('/'), label: 'Home' },
     { href: href('/courses/'), label: 'Courses' },
-    { href: href('/flashcards/'), label: 'Flashcards' },
-    { href: href('/glossary/'), label: 'Glossary' },
+    // Only when the site ships any flashcard decks (build-time count).
+    ...(hasFlashcards ? [{ href: href('/flashcards/'), label: 'Flashcards' }] : []),
+    // Only when the site ships any glossary terms (build-time count).
+    ...(hasGlossary ? [{ href: href('/glossary/'), label: 'Glossary' }] : []),
     // Only when the site enables code runtimes (astro.config `runtimes`).
     ...(anyRuntimes() ? [{ href: href('/playground/'), label: 'Playground' }] : []),
     // General feedback — only when the site configured a contactEndpoint.
