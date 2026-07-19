@@ -288,6 +288,19 @@ main.page {
   margin-block: var(--space-3);
 }
 
+/*
+ * Images: never wider than the column, never distorted, and centred —
+ * diagrams, drawings, and screenshots read as figures rather than being
+ * jammed against the left margin.
+ */
+.prose img {
+  max-width: 100%;
+  height: auto;
+  /* The reset makes images `display: block`, so text-align can't centre
+     them — auto side margins are what actually does it. */
+  margin-inline: auto;
+}
+
 .prose pre {
   padding: var(--space-3);
   border-radius: var(--radius-md);
